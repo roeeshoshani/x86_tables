@@ -85,7 +85,8 @@ struct RmOpInfo {
 }
 
 #[derive(Debug, Clone)]
-struct AxOpInfo {
+struct SpecificRegOpInfo {
+    reg_64_bit_name: &'static str,
     size: OpSizeInfo,
 }
 
@@ -98,21 +99,16 @@ struct RelOpInfo {
 enum OpInfo {
     Imm(ImmOpInfo),
     Reg(RegOpInfo),
-    Rm(RmOpInfo),
-    Ax(AxOpInfo),
-    Rel(RelOpInfo),
+    Rm(OpSizeInfo),
+    SpecificReg(SpecificRegOpInfo),
+    Rel(OpSizeInfo),
+    Implicit(OpSizeInfo),
     Cond,
 }
 impl OpInfo {
-    const RM_8: Self = Self::Rm(RmOpInfo {
-        size: OpSizeInfo::SZ_ALWAYS_8,
-    });
-    const RM_16_32_64_DEF_32: Self = Self::Rm(RmOpInfo {
-        size: OpSizeInfo::SZ_16_32_64_DEF_32,
-    });
-    const RM_16_32_64_DEF_64: Self = Self::Rm(RmOpInfo {
-        size: OpSizeInfo::SZ_16_32_64_DEF_64,
-    });
+    const RM_8: Self = Self::Rm(OpSizeInfo::SZ_ALWAYS_8);
+    const RM_16_32_64_DEF_32: Self = Self::Rm(OpSizeInfo::SZ_16_32_64_DEF_32);
+    const RM_16_32_64_DEF_64: Self = Self::Rm(OpSizeInfo::SZ_16_32_64_DEF_64);
     const R_MODRM_8: Self = Self::Reg(RegOpInfo {
         encoding: RegEncoding::Modrm,
         size: OpSizeInfo::SZ_ALWAYS_8,
@@ -129,11 +125,13 @@ impl OpInfo {
         encoding: RegEncoding::Opcode,
         size: OpSizeInfo::SZ_16_32_64_DEF_64,
     });
-    const AL: Self = Self::Ax(AxOpInfo {
+    const AL: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_ALWAYS_8,
+        reg_64_bit_name: "rax",
     });
-    const AX_16_32_64_DEF_32: Self = Self::Ax(AxOpInfo {
+    const AX_16_32_64_DEF_32: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
+        reg_64_bit_name: "rax",
     });
 
     /// an 8-bit immediate which should not be sign/zero extended.
@@ -351,12 +349,7 @@ fn table() -> Vec<InsnInfo> {
         16,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "jcc",
-            ops: &[
-                OpInfo::Cond,
-                OpInfo::Rel(RelOpInfo {
-                    size: OpSizeInfo::SZ_ALWAYS_8,
-                }),
-            ],
+            ops: &[OpInfo::Cond, OpInfo::Rel(OpSizeInfo::SZ_ALWAYS_8)],
         }),
     );
     // 0x80
