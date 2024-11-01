@@ -2,6 +2,9 @@ pub type Mnemonic = &'static str;
 
 const UNSUPPORTED_MNEMONIC: Mnemonic = "unsupported";
 
+const OPCODE_REG_INSN_REPEAT_COUNT: usize = 8;
+
+#[derive(Debug, Clone)]
 enum OpSize {
     S8,
     S16,
@@ -9,60 +12,83 @@ enum OpSize {
     S64,
 }
 
+#[derive(Debug, Clone)]
 struct OpSizeInfo {
+    with_operand_size_override: OpSize,
     mode_32: OpSize,
     mode_64: OpSize,
     mode_64_with_rex_w: OpSize,
-    with_operand_size_override: OpSize,
 }
 impl OpSizeInfo {
     /// operand size is always 8 bits
     const SZ_ALWAYS_8: Self = Self {
+        with_operand_size_override: OpSize::S8,
         mode_32: OpSize::S8,
         mode_64: OpSize::S8,
         mode_64_with_rex_w: OpSize::S8,
-        with_operand_size_override: OpSize::S8,
     };
 
-    /// operand size may be 16, 32 or 64 bits.
-    /// the default is 32 bits in both 32 and 64 bit mode. operand size override makes it 16 bits. REX.W makes it 64 bits.
+    /// the default operand size for instructions that default to 32-bit operands.
     const SZ_16_32_64_DEF_32: Self = Self {
-        mode_32: OpSize::S8,
-        mode_64: OpSize::S8,
-        mode_64_with_rex_w: OpSize::S8,
-        with_operand_size_override: OpSize::S8,
+        with_operand_size_override: OpSize::S16,
+        mode_32: OpSize::S32,
+        mode_64: OpSize::S32,
+        mode_64_with_rex_w: OpSize::S64,
+    };
+
+    /// the default operand size for instructions that default to 64-bit operands.
+    const SZ_16_32_64_DEF_64: Self = Self {
+        with_operand_size_override: OpSize::S16,
+        mode_32: OpSize::S32,
+        mode_64: OpSize::S64,
+        mode_64_with_rex_w: OpSize::S64,
+    };
+
+    /// a common size info for immediates that are either 16 or 32 bits.
+    const SZ_IMM_16_32: Self = Self {
+        with_operand_size_override: OpSize::S16,
+        mode_32: OpSize::S32,
+        mode_64: OpSize::S32,
+        mode_64_with_rex_w: OpSize::S32,
     };
 }
 
+#[derive(Debug, Clone)]
 enum ImmExtendKind {
     SignExtend,
     ZeroExtend,
 }
 
+#[derive(Debug, Clone)]
 struct ImmOpInfo {
     encoded_size: OpSizeInfo,
     extended_size: OpSizeInfo,
     extend_kind: ImmExtendKind,
 }
 
+#[derive(Debug, Clone)]
 enum RegEncoding {
     Modrm,
     Opcode,
 }
 
+#[derive(Debug, Clone)]
 struct RegOpInfo {
     encoding: RegEncoding,
     size: OpSizeInfo,
 }
 
+#[derive(Debug, Clone)]
 struct RmOpInfo {
     size: OpSizeInfo,
 }
 
+#[derive(Debug, Clone)]
 struct AxOpInfo {
     size: OpSizeInfo,
 }
 
+#[derive(Debug, Clone)]
 enum OpInfo {
     Imm(ImmOpInfo),
     Reg(RegOpInfo),
@@ -102,6 +128,7 @@ impl OpInfo {
 
 type Ops = &'static [OpInfo];
 
+#[derive(Debug, Clone)]
 struct InsnInfo {
     mnemonic: Mnemonic,
     ops: Ops,
@@ -133,31 +160,27 @@ fn simple_binary_op(table: &mut Vec<InsnInfo>, mnemonic: Mnemonic) {
         ops: &[
             OpInfo::AX_16_32_64_DEF_32,
             OpInfo::Imm(ImmOpInfo {
-                encoded_size: OpSizeInfo {
-                    mode_32: OpSize::S32,
-                    mode_64: OpSize::S32,
-                    mode_64_with_rex_w: OpSize::S32,
-                    with_operand_size_override: OpSize::S16,
-                },
-                extended_size: OpSizeInfo {
-                    mode_32: OpSize::S32,
-                    mode_64: OpSize::S32,
-                    mode_64_with_rex_w: OpSize::S64,
-                    with_operand_size_override: OpSize::S16,
-                },
+                encoded_size: OpSizeInfo::SZ_IMM_16_32,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 extend_kind: ImmExtendKind::SignExtend,
             }),
         ],
     });
 }
 
+fn repeat(table: &mut Vec<InsnInfo>, amount: usize, entry: InsnInfo) {
+    table.extend(std::iter::repeat_n(entry, amount))
+}
+
 fn unsupported(table: &mut Vec<InsnInfo>, amount: usize) {
-    for _ in 0..amount {
-        table.push(InsnInfo {
+    repeat(
+        table,
+        amount,
+        InsnInfo {
             mnemonic: UNSUPPORTED_MNEMONIC,
             ops: &[],
-        })
-    }
+        },
+    )
 }
 
 fn table() -> Vec<InsnInfo> {
@@ -195,6 +218,78 @@ fn table() -> Vec<InsnInfo> {
     simple_binary_op(&mut table, "cmp");
     // 0x3e - 0x3f
     unsupported(&mut table, 2);
+    // 0x40 - 0x47
+    repeat(
+        &mut table,
+        OPCODE_REG_INSN_REPEAT_COUNT,
+        InsnInfo {
+            mnemonic: "inc",
+            ops: &[OpInfo::Reg(RegOpInfo {
+                encoding: RegEncoding::Opcode,
+                size: OpSizeInfo::SZ_16_32_64_DEF_32,
+            })],
+        },
+    );
+    // 0x48 - 0x4f
+    repeat(
+        &mut table,
+        OPCODE_REG_INSN_REPEAT_COUNT,
+        InsnInfo {
+            mnemonic: "dec",
+            ops: &[OpInfo::Reg(RegOpInfo {
+                encoding: RegEncoding::Opcode,
+                size: OpSizeInfo::SZ_16_32_64_DEF_32,
+            })],
+        },
+    );
+    // 0x50 - 0x57
+    repeat(
+        &mut table,
+        OPCODE_REG_INSN_REPEAT_COUNT,
+        InsnInfo {
+            mnemonic: "push",
+            ops: &[OpInfo::Reg(RegOpInfo {
+                encoding: RegEncoding::Opcode,
+                size: OpSizeInfo::SZ_16_32_64_DEF_64,
+            })],
+        },
+    );
+    // 0x58 - 0x5f
+    repeat(
+        &mut table,
+        OPCODE_REG_INSN_REPEAT_COUNT,
+        InsnInfo {
+            mnemonic: "pop",
+            ops: &[OpInfo::Reg(RegOpInfo {
+                encoding: RegEncoding::Opcode,
+                size: OpSizeInfo::SZ_16_32_64_DEF_64,
+            })],
+        },
+    );
+    // 0x60 - 0x67
+    unsupported(&mut table, 8);
+    // 0x68
+    table.push(InsnInfo {
+        mnemonic: "push",
+        ops: &[OpInfo::Imm(ImmOpInfo {
+            encoded_size: OpSizeInfo::SZ_IMM_16_32,
+            extended_size: OpSizeInfo::SZ_16_32_64_DEF_64,
+            extend_kind: ImmExtendKind::SignExtend,
+        })],
+    });
+    // 0x69
+    table.push(InsnInfo {
+        mnemonic: "imul",
+        ops: &[
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::Imm(ImmOpInfo {
+                encoded_size: OpSizeInfo::SZ_IMM_16_32,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                extend_kind: ImmExtendKind::SignExtend,
+            }),
+        ],
+    });
 
     table
 }
