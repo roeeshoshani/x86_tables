@@ -1,8 +1,7 @@
 pub type Mnemonic = &'static str;
 
-const UNSUPPORTED_MNEMONIC: Mnemonic = "unsupported";
-
-const OPCODE_REG_INSN_REPEAT_COUNT: usize = 8;
+const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
+const MNEMONIC_MODRM_REG_OPCODE_EXT: Mnemonic = "modrm_reg_opcode_ext";
 
 #[derive(Debug, Clone)]
 enum OpSize {
@@ -89,11 +88,18 @@ struct AxOpInfo {
 }
 
 #[derive(Debug, Clone)]
+struct RelOpInfo {
+    size: OpSizeInfo,
+}
+
+#[derive(Debug, Clone)]
 enum OpInfo {
     Imm(ImmOpInfo),
     Reg(RegOpInfo),
     Rm(RmOpInfo),
     Ax(AxOpInfo),
+    Rel(RelOpInfo),
+    Cond,
 }
 impl OpInfo {
     const RM_8: Self = Self::Rm(RmOpInfo {
@@ -129,33 +135,44 @@ impl OpInfo {
 type Ops = &'static [OpInfo];
 
 #[derive(Debug, Clone)]
-struct InsnInfo {
+struct RegularInsnInfo {
     mnemonic: Mnemonic,
     ops: Ops,
 }
 
+#[derive(Debug, Clone)]
+struct ModrmRegOpcodeExtInsnInfo {
+    by_reg_value: [RegularInsnInfo; 8],
+}
+
+#[derive(Debug, Clone)]
+enum InsnInfo {
+    Regular(RegularInsnInfo),
+    ModrmRegOpcodeExt(RegularInsnInfo),
+}
+
 fn simple_binary_op(table: &mut Vec<InsnInfo>, mnemonic: Mnemonic) {
-    table.push(InsnInfo {
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
-    });
-    table.push(InsnInfo {
+    }));
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
-    });
-    table.push(InsnInfo {
+    }));
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[OpInfo::R_MODRM_8, OpInfo::RM_8],
-    });
-    table.push(InsnInfo {
+    }));
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[OpInfo::R_MODRM_16_32_64_DEF_32, OpInfo::RM_16_32_64_DEF_32],
-    });
-    table.push(InsnInfo {
+    }));
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[OpInfo::AL, OpInfo::IMM_8_NO_EXT],
-    });
-    table.push(InsnInfo {
+    }));
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic,
         ops: &[
             OpInfo::AX_16_32_64_DEF_32,
@@ -165,7 +182,7 @@ fn simple_binary_op(table: &mut Vec<InsnInfo>, mnemonic: Mnemonic) {
                 extend_kind: ImmExtendKind::SignExtend,
             }),
         ],
-    });
+    }));
 }
 
 fn repeat(table: &mut Vec<InsnInfo>, amount: usize, entry: InsnInfo) {
@@ -176,10 +193,10 @@ fn unsupported(table: &mut Vec<InsnInfo>, amount: usize) {
     repeat(
         table,
         amount,
-        InsnInfo {
-            mnemonic: UNSUPPORTED_MNEMONIC,
+        InsnInfo::Regular(RegularInsnInfo {
+            mnemonic: MNEMONIC_UNSUPPORTED,
             ops: &[],
-        },
+        }),
     )
 }
 
@@ -221,64 +238,64 @@ fn table() -> Vec<InsnInfo> {
     // 0x40 - 0x47
     repeat(
         &mut table,
-        OPCODE_REG_INSN_REPEAT_COUNT,
-        InsnInfo {
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "inc",
             ops: &[OpInfo::Reg(RegOpInfo {
                 encoding: RegEncoding::Opcode,
                 size: OpSizeInfo::SZ_16_32_64_DEF_32,
             })],
-        },
+        }),
     );
     // 0x48 - 0x4f
     repeat(
         &mut table,
-        OPCODE_REG_INSN_REPEAT_COUNT,
-        InsnInfo {
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "dec",
             ops: &[OpInfo::Reg(RegOpInfo {
                 encoding: RegEncoding::Opcode,
                 size: OpSizeInfo::SZ_16_32_64_DEF_32,
             })],
-        },
+        }),
     );
     // 0x50 - 0x57
     repeat(
         &mut table,
-        OPCODE_REG_INSN_REPEAT_COUNT,
-        InsnInfo {
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "push",
             ops: &[OpInfo::Reg(RegOpInfo {
                 encoding: RegEncoding::Opcode,
                 size: OpSizeInfo::SZ_16_32_64_DEF_64,
             })],
-        },
+        }),
     );
     // 0x58 - 0x5f
     repeat(
         &mut table,
-        OPCODE_REG_INSN_REPEAT_COUNT,
-        InsnInfo {
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "pop",
             ops: &[OpInfo::Reg(RegOpInfo {
                 encoding: RegEncoding::Opcode,
                 size: OpSizeInfo::SZ_16_32_64_DEF_64,
             })],
-        },
+        }),
     );
     // 0x60 - 0x67
     unsupported(&mut table, 8);
     // 0x68
-    table.push(InsnInfo {
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "push",
         ops: &[OpInfo::Imm(ImmOpInfo {
             encoded_size: OpSizeInfo::SZ_IMM_16_32,
             extended_size: OpSizeInfo::SZ_16_32_64_DEF_64,
             extend_kind: ImmExtendKind::SignExtend,
         })],
-    });
+    }));
     // 0x69
-    table.push(InsnInfo {
+    table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "imul",
         ops: &[
             OpInfo::R_MODRM_16_32_64_DEF_32,
@@ -289,11 +306,50 @@ fn table() -> Vec<InsnInfo> {
                 extend_kind: ImmExtendKind::SignExtend,
             }),
         ],
-    });
+    }));
+    // 0x6a
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "push",
+        ops: &[OpInfo::Imm(ImmOpInfo {
+            encoded_size: OpSizeInfo::SZ_ALWAYS_8,
+            extended_size: OpSizeInfo::SZ_16_32_64_DEF_64,
+            extend_kind: ImmExtendKind::SignExtend,
+        })],
+    }));
+    // 0x6b
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "imul",
+        ops: &[
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::Imm(ImmOpInfo {
+                encoded_size: OpSizeInfo::SZ_ALWAYS_8,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                extend_kind: ImmExtendKind::SignExtend,
+            }),
+        ],
+    }));
+    // 0x6c - 0x6f
+    unsupported(&mut table, 4);
+    // 0x70 - 0x7f
+    repeat(
+        &mut table,
+        16,
+        InsnInfo::Regular(RegularInsnInfo {
+            mnemonic: "jcc",
+            ops: &[
+                OpInfo::Cond,
+                OpInfo::Rel(RelOpInfo {
+                    size: OpSizeInfo::SZ_ALWAYS_8,
+                }),
+            ],
+        }),
+    );
 
     table
 }
 
 fn main() {
-    println!("Hello, world!");
+    let t = table();
+    println!("{:?}", t);
 }
