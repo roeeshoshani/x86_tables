@@ -1,7 +1,9 @@
 pub type Mnemonic = &'static str;
 
 const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
-const MNEMONIC_MODRM_REG_OPCODE_EXT: Mnemonic = "modrm_reg_opcode_ext";
+
+const SIMPLE_BINOP_MNEMONICS: [Mnemonic; 8] =
+    ["add", "or", "adc", "sbb", "and", "sub", "xor", "cmd"];
 
 #[derive(Debug, Clone)]
 enum OpSize {
@@ -43,8 +45,8 @@ impl OpSizeInfo {
         mode_64_with_rex_w: OpSize::S64,
     };
 
-    /// a common size info for immediates that are either 16 or 32 bits.
-    const SZ_IMM_16_32: Self = Self {
+    /// a common size info for immediate encodings that are either 16 or 32 bits.
+    const SZ_IMM_ENCODING_16_32: Self = Self {
         with_operand_size_override: OpSize::S16,
         mode_32: OpSize::S32,
         mode_64: OpSize::S32,
@@ -144,11 +146,21 @@ struct RegularInsnInfo {
 struct ModrmRegOpcodeExtInsnInfo {
     by_reg_value: [RegularInsnInfo; 8],
 }
+impl ModrmRegOpcodeExtInsnInfo {
+    fn new_with_same_operands(ops: Ops, mnemonics: [Mnemonic; 8]) -> Self {
+        Self {
+            by_reg_value: std::array::from_fn(|i| RegularInsnInfo {
+                mnemonic: mnemonics[i],
+                ops,
+            }),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 enum InsnInfo {
     Regular(RegularInsnInfo),
-    ModrmRegOpcodeExt(RegularInsnInfo),
+    ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo),
 }
 
 fn simple_binary_op(table: &mut Vec<InsnInfo>, mnemonic: Mnemonic) {
@@ -177,7 +189,7 @@ fn simple_binary_op(table: &mut Vec<InsnInfo>, mnemonic: Mnemonic) {
         ops: &[
             OpInfo::AX_16_32_64_DEF_32,
             OpInfo::Imm(ImmOpInfo {
-                encoded_size: OpSizeInfo::SZ_IMM_16_32,
+                encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
                 extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 extend_kind: ImmExtendKind::SignExtend,
             }),
@@ -289,7 +301,7 @@ fn table() -> Vec<InsnInfo> {
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "push",
         ops: &[OpInfo::Imm(ImmOpInfo {
-            encoded_size: OpSizeInfo::SZ_IMM_16_32,
+            encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
             extended_size: OpSizeInfo::SZ_16_32_64_DEF_64,
             extend_kind: ImmExtendKind::SignExtend,
         })],
@@ -301,7 +313,7 @@ fn table() -> Vec<InsnInfo> {
             OpInfo::R_MODRM_16_32_64_DEF_32,
             OpInfo::RM_16_32_64_DEF_32,
             OpInfo::Imm(ImmOpInfo {
-                encoded_size: OpSizeInfo::SZ_IMM_16_32,
+                encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
                 extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 extend_kind: ImmExtendKind::SignExtend,
             }),
@@ -345,6 +357,43 @@ fn table() -> Vec<InsnInfo> {
             ],
         }),
     );
+    // 0x80
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[OpInfo::RM_8, OpInfo::IMM_8_NO_EXT],
+            SIMPLE_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0x81
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_16_32_64_DEF_32,
+                OpInfo::Imm(ImmOpInfo {
+                    encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
+                    extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                    extend_kind: ImmExtendKind::SignExtend,
+                }),
+            ],
+            SIMPLE_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0x82
+    unsupported(&mut table, 1);
+    // 0x83
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_16_32_64_DEF_32,
+                OpInfo::Imm(ImmOpInfo {
+                    encoded_size: OpSizeInfo::SZ_ALWAYS_8,
+                    extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                    extend_kind: ImmExtendKind::SignExtend,
+                }),
+            ],
+            SIMPLE_BINOP_MNEMONICS,
+        ),
+    ));
 
     table
 }
