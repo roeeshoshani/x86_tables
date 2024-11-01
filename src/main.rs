@@ -133,6 +133,10 @@ impl OpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
         reg_64_bit_name: "rax",
     });
+    const DX_16_32_64_DEF_32: Self = Self::SpecificReg(SpecificRegOpInfo {
+        size: OpSizeInfo::SZ_16_32_64_DEF_32,
+        reg_64_bit_name: "rdx",
+    });
 
     /// an 8-bit immediate which should not be sign/zero extended.
     const IMM_8_NO_EXT: Self = Self::Imm(ImmOpInfo {
@@ -468,6 +472,34 @@ fn table() -> Vec<InsnInfo> {
             ops: &[OpInfo::AX_16_32_64_DEF_32, OpInfo::R_OPCODE_16_32_64_DEF_32],
         }),
     );
+    //0x98
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movsz", // this is actually cbw, but this makes life simpler when lifting it
+        ops: &[
+            OpInfo::AX_16_32_64_DEF_32,
+            OpInfo::SpecificReg(SpecificRegOpInfo {
+                reg_64_bit_name: "rax",
+                size: OpSizeInfo {
+                    with_operand_size_override: OpSize::S8,
+                    mode_32: OpSize::S16,
+                    mode_64: OpSize::S16,
+                    mode_64_with_rex_w: OpSize::S32,
+                },
+            }),
+        ],
+    }));
+    // 0x99
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cwd", // this is cwd/cdq/cqo
+        ops: &[OpInfo::DX_16_32_64_DEF_32, OpInfo::AX_16_32_64_DEF_32],
+    }));
+    // 0x9a - 0x9f
+    unsupported(&mut table, 6);
+    // 0xa0
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[OpInfo::AL, todo!()],
+    }));
 
     table
 }
