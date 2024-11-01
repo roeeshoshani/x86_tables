@@ -110,6 +110,9 @@ impl OpInfo {
     const RM_16_32_64_DEF_32: Self = Self::Rm(RmOpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
     });
+    const RM_16_32_64_DEF_64: Self = Self::Rm(RmOpInfo {
+        size: OpSizeInfo::SZ_16_32_64_DEF_64,
+    });
     const R_MODRM_8: Self = Self::Reg(RegOpInfo {
         encoding: RegEncoding::Modrm,
         size: OpSizeInfo::SZ_ALWAYS_8,
@@ -117,6 +120,14 @@ impl OpInfo {
     const R_MODRM_16_32_64_DEF_32: Self = Self::Reg(RegOpInfo {
         encoding: RegEncoding::Modrm,
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
+    });
+    const R_OPCODE_16_32_64_DEF_32: Self = Self::Reg(RegOpInfo {
+        encoding: RegEncoding::Opcode,
+        size: OpSizeInfo::SZ_16_32_64_DEF_32,
+    });
+    const R_OPCODE_16_32_64_DEF_64: Self = Self::Reg(RegOpInfo {
+        encoding: RegEncoding::Opcode,
+        size: OpSizeInfo::SZ_16_32_64_DEF_64,
     });
     const AL: Self = Self::Ax(AxOpInfo {
         size: OpSizeInfo::SZ_ALWAYS_8,
@@ -140,6 +151,12 @@ type Ops = &'static [OpInfo];
 struct RegularInsnInfo {
     mnemonic: Mnemonic,
     ops: Ops,
+}
+impl RegularInsnInfo {
+    const UNSUPPORTED: Self = Self {
+        mnemonic: MNEMONIC_UNSUPPORTED,
+        ops: &[],
+    };
 }
 
 #[derive(Debug, Clone)]
@@ -205,10 +222,7 @@ fn unsupported(table: &mut Vec<InsnInfo>, amount: usize) {
     repeat(
         table,
         amount,
-        InsnInfo::Regular(RegularInsnInfo {
-            mnemonic: MNEMONIC_UNSUPPORTED,
-            ops: &[],
-        }),
+        InsnInfo::Regular(RegularInsnInfo::UNSUPPORTED),
     )
 }
 
@@ -253,10 +267,7 @@ fn table() -> Vec<InsnInfo> {
         8,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "inc",
-            ops: &[OpInfo::Reg(RegOpInfo {
-                encoding: RegEncoding::Opcode,
-                size: OpSizeInfo::SZ_16_32_64_DEF_32,
-            })],
+            ops: &[OpInfo::R_OPCODE_16_32_64_DEF_32],
         }),
     );
     // 0x48 - 0x4f
@@ -265,10 +276,7 @@ fn table() -> Vec<InsnInfo> {
         8,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "dec",
-            ops: &[OpInfo::Reg(RegOpInfo {
-                encoding: RegEncoding::Opcode,
-                size: OpSizeInfo::SZ_16_32_64_DEF_32,
-            })],
+            ops: &[OpInfo::R_OPCODE_16_32_64_DEF_32],
         }),
     );
     // 0x50 - 0x57
@@ -277,10 +285,7 @@ fn table() -> Vec<InsnInfo> {
         8,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "push",
-            ops: &[OpInfo::Reg(RegOpInfo {
-                encoding: RegEncoding::Opcode,
-                size: OpSizeInfo::SZ_16_32_64_DEF_64,
-            })],
+            ops: &[OpInfo::R_OPCODE_16_32_64_DEF_64],
         }),
     );
     // 0x58 - 0x5f
@@ -289,10 +294,7 @@ fn table() -> Vec<InsnInfo> {
         8,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "pop",
-            ops: &[OpInfo::Reg(RegOpInfo {
-                encoding: RegEncoding::Opcode,
-                size: OpSizeInfo::SZ_16_32_64_DEF_64,
-            })],
+            ops: &[OpInfo::R_OPCODE_16_32_64_DEF_64],
         }),
     );
     // 0x60 - 0x67
@@ -394,6 +396,85 @@ fn table() -> Vec<InsnInfo> {
             SIMPLE_BINOP_MNEMONICS,
         ),
     ));
+    // 0x84
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "test",
+        ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
+    }));
+    // 0x85
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "test",
+        ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
+    }));
+    // 0x86
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "xchg",
+        ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
+    }));
+    // 0x87
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "xchg",
+        ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
+    }));
+    // 0x88
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
+    }));
+    // 0x89
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
+    }));
+    // 0x8a
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[OpInfo::R_MODRM_8, OpInfo::RM_8],
+    }));
+    // 0x8b
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[OpInfo::R_MODRM_16_32_64_DEF_32, OpInfo::RM_16_32_64_DEF_32],
+    }));
+    // 0x8c
+    unsupported(&mut table, 1);
+    // 0x8d
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "lea",
+        ops: &[OpInfo::R_MODRM_16_32_64_DEF_32, OpInfo::RM_16_32_64_DEF_32],
+    }));
+    // 0x8e
+    unsupported(&mut table, 1);
+    // 0x8f
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            RegularInsnInfo {
+                mnemonic: "pop",
+                ops: &[OpInfo::RM_16_32_64_DEF_64],
+            },
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+        ],
+    }));
+    // 0x90
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "nop",
+        ops: &[],
+    }));
+    // 0x91 - 0x97
+    repeat(
+        &mut table,
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
+            mnemonic: "xchg",
+            ops: &[OpInfo::AX_16_32_64_DEF_32, OpInfo::R_OPCODE_16_32_64_DEF_32],
+        }),
+    );
 
     table
 }
