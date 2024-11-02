@@ -68,6 +68,11 @@ struct ImmOpInfo {
 }
 
 #[derive(Debug, Clone)]
+struct MemOffsetOpInfo {
+    mem_operand_size: OpSizeInfo,
+}
+
+#[derive(Debug, Clone)]
 enum RegEncoding {
     Modrm,
     Opcode,
@@ -97,12 +102,24 @@ struct RelOpInfo {
 
 #[derive(Debug, Clone)]
 enum OpInfo {
+    /// immediate operand
     Imm(ImmOpInfo),
+
+    /// register operand
     Reg(RegOpInfo),
+
+    /// rm operand
     Rm(OpSizeInfo),
+
+    /// specific register which is enforced by the opcode
     SpecificReg(SpecificRegOpInfo),
+
+    /// relative offset used for relative jumps
     Rel(OpSizeInfo),
-    Implicit(OpSizeInfo),
+
+    /// memory access by absolute address, for example `mov rcx, [0x1234]`
+    MemOffset(MemOffsetOpInfo),
+
     Cond,
 }
 impl OpInfo {
@@ -498,7 +515,42 @@ fn table() -> Vec<InsnInfo> {
     // 0xa0
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "mov",
-        ops: &[OpInfo::AL, todo!()],
+        ops: &[
+            OpInfo::AL,
+            OpInfo::MemOffset(MemOffsetOpInfo {
+                mem_operand_size: OpSizeInfo::SZ_ALWAYS_8,
+            }),
+        ],
+    }));
+    // 0xa1
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[
+            OpInfo::AX_16_32_64_DEF_32,
+            OpInfo::MemOffset(MemOffsetOpInfo {
+                mem_operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+            }),
+        ],
+    }));
+    // 0xa2
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[
+            OpInfo::MemOffset(MemOffsetOpInfo {
+                mem_operand_size: OpSizeInfo::SZ_ALWAYS_8,
+            }),
+            OpInfo::AL,
+        ],
+    }));
+    // 0xa3
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "mov",
+        ops: &[
+            OpInfo::MemOffset(MemOffsetOpInfo {
+                mem_operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+            }),
+            OpInfo::AX_16_32_64_DEF_32,
+        ],
     }));
 
     table
