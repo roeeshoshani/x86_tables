@@ -592,6 +592,36 @@ fn table() -> Vec<InsnInfo> {
             }),
         ],
     }));
+    // 0xaa
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "stos",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xab
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "stos",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
+    }));
+    // 0xac
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "lods",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xad
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "lods",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
+    }));
+    // 0xae
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "scas",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xaf
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "scas",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
+    }));
 
     table
 }
