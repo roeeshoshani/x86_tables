@@ -5,6 +5,17 @@ const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
 const SIMPLE_BINOP_MNEMONICS: [Mnemonic; 8] =
     ["add", "or", "adc", "sbb", "and", "sub", "xor", "cmd"];
 
+const SHIFT_BINOP_MNEMONICS: [Mnemonic; 8] = [
+    "rol",
+    "ror",
+    "rcl",
+    "rcr",
+    "shl",
+    "shr",
+    MNEMONIC_UNSUPPORTED,
+    "sar",
+];
+
 #[derive(Debug, Clone)]
 enum OpSize {
     S8,
@@ -68,6 +79,12 @@ struct ImmOpInfo {
 }
 
 #[derive(Debug, Clone)]
+struct SpecificImmOpInfo {
+    value: u64,
+    operand_size: OpSizeInfo,
+}
+
+#[derive(Debug, Clone)]
 struct MemOffsetOpInfo {
     mem_operand_size: OpSizeInfo,
 }
@@ -104,6 +121,9 @@ struct RelOpInfo {
 enum OpInfo {
     /// immediate operand
     Imm(ImmOpInfo),
+
+    /// specific immediate which is enforced by the opcode
+    SpecificImm(SpecificImmOpInfo),
 
     /// register operand
     Reg(RegOpInfo),
@@ -651,6 +671,103 @@ fn table() -> Vec<InsnInfo> {
             ],
         }),
     );
+    // 0xc0
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[OpInfo::RM_8, OpInfo::IMM_8_NO_EXT],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0xc1
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_16_32_64_DEF_32,
+                OpInfo::Imm(ImmOpInfo {
+                    encoded_size: OpSizeInfo::SZ_ALWAYS_8,
+                    extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                    extend_kind: ImmExtendKind::ZeroExtend,
+                }),
+            ],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0xc2
+    unsupported(&mut table, 1);
+    // 0xc3
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "ret",
+        ops: &[],
+    }));
+    // 0xc4 - 0xc5
+    unsupported(&mut table, 2);
+    // 0xc6
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            RegularInsnInfo {
+                mnemonic: "mov",
+                ops: &[OpInfo::RM_8, OpInfo::IMM_8_NO_EXT],
+            },
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+        ],
+    }));
+    // 0xc7
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            RegularInsnInfo {
+                mnemonic: "mov",
+                ops: &[
+                    OpInfo::RM_16_32_64_DEF_32,
+                    OpInfo::Imm(ImmOpInfo {
+                        encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
+                        extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                        extend_kind: ImmExtendKind::SignExtend,
+                    }),
+                ],
+            },
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+        ],
+    }));
+    // 0xc8 - 0xcf
+    unsupported(&mut table, 8);
+    // 0xd0
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_8,
+                OpInfo::SpecificImm(SpecificImmOpInfo {
+                    value: 1,
+                    operand_size: OpSizeInfo::SZ_ALWAYS_8,
+                }),
+            ],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0xd1
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_16_32_64_DEF_32,
+                OpInfo::SpecificImm(SpecificImmOpInfo {
+                    value: 1,
+                    operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                }),
+            ],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
 
     table
 }
