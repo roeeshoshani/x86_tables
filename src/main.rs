@@ -198,6 +198,15 @@ impl OpInfo {
         // doesn't matter
         extend_kind: ImmExtendKind::SignExtend,
     });
+
+    /// a 16/32 bit relative offset
+    const REL_16_32: Self = Self::Rel(OpSizeInfo {
+        // operand size override is not allowed with relative operands, so this is ignores anyway
+        with_operand_size_override: OpSize::S16,
+        mode_32: OpSize::S32,
+        mode_64: OpSize::S64,
+        mode_64_with_rex_w: OpSize::S64,
+    });
 }
 
 type Ops = &'static [OpInfo];
@@ -798,6 +807,128 @@ fn table() -> Vec<InsnInfo> {
             SHIFT_BINOP_MNEMONICS,
         ),
     ));
+    // 0xd4 - 0xe7
+    unsupported(&mut table, 0x14);
+    // 0xe8
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "call",
+        ops: &[OpInfo::REL_16_32],
+    }));
+    // 0xe9
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "jmp",
+        ops: &[OpInfo::REL_16_32],
+    }));
+    // 0xea
+    unsupported(&mut table, 1);
+    // 0xeb
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "jmp",
+        ops: &[OpInfo::Rel(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xec - 0xf3
+    unsupported(&mut table, 8);
+    // 0xf4
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "hlt",
+        ops: &[],
+    }));
+    // 0xf5
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cmc",
+        ops: &[],
+    }));
+    // 0xf6
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            // 0
+            RegularInsnInfo {
+                mnemonic: "test",
+                ops: &[OpInfo::RM_8, OpInfo::IMM_8_NO_EXT],
+            },
+            // 1
+            RegularInsnInfo::UNSUPPORTED,
+            // 2
+            RegularInsnInfo {
+                mnemonic: "not",
+                ops: &[OpInfo::RM_8],
+            },
+            // 3
+            RegularInsnInfo {
+                mnemonic: "neg",
+                ops: &[OpInfo::RM_8],
+            },
+            // 4
+            RegularInsnInfo {
+                mnemonic: "mul",
+                ops: &[OpInfo::RM_8],
+            },
+            // 5
+            RegularInsnInfo {
+                mnemonic: "imul",
+                ops: &[OpInfo::RM_8],
+            },
+            // 6
+            RegularInsnInfo {
+                mnemonic: "div",
+                ops: &[OpInfo::RM_8],
+            },
+            // 7
+            RegularInsnInfo {
+                mnemonic: "idiv",
+                ops: &[OpInfo::RM_8],
+            },
+        ],
+    }));
+    // 0xf7
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            // 0
+            RegularInsnInfo {
+                mnemonic: "test",
+                ops: &[
+                    OpInfo::RM_16_32_64_DEF_32,
+                    OpInfo::Imm(ImmOpInfo {
+                        encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
+                        extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                        extend_kind: ImmExtendKind::SignExtend,
+                    }),
+                ],
+            },
+            // 1
+            RegularInsnInfo::UNSUPPORTED,
+            // 2
+            RegularInsnInfo {
+                mnemonic: "not",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 3
+            RegularInsnInfo {
+                mnemonic: "neg",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 4
+            RegularInsnInfo {
+                mnemonic: "mul",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 5
+            RegularInsnInfo {
+                mnemonic: "imul",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 6
+            RegularInsnInfo {
+                mnemonic: "div",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 7
+            RegularInsnInfo {
+                mnemonic: "idiv",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+        ],
+    }));
 
     table
 }
