@@ -137,6 +137,10 @@ impl OpInfo {
         encoding: RegEncoding::Modrm,
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
     });
+    const R_OPCODE_8: Self = Self::Reg(RegOpInfo {
+        encoding: RegEncoding::Opcode,
+        size: OpSizeInfo::SZ_ALWAYS_8,
+    });
     const R_OPCODE_16_32_64_DEF_32: Self = Self::Reg(RegOpInfo {
         encoding: RegEncoding::Opcode,
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
@@ -622,6 +626,31 @@ fn table() -> Vec<InsnInfo> {
         mnemonic: "scas",
         ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
     }));
+    // 0xb0 - 0xb7
+    repeat(
+        &mut table,
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
+            mnemonic: "mov",
+            ops: &[OpInfo::R_OPCODE_8, OpInfo::IMM_8_NO_EXT],
+        }),
+    );
+    // 0xb8 - 0xbf
+    repeat(
+        &mut table,
+        8,
+        InsnInfo::Regular(RegularInsnInfo {
+            mnemonic: "mov",
+            ops: &[
+                OpInfo::R_OPCODE_16_32_64_DEF_32,
+                OpInfo::Imm(ImmOpInfo {
+                    encoded_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                    extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                    extend_kind: ImmExtendKind::ZeroExtend,
+                }),
+            ],
+        }),
+    );
 
     table
 }
