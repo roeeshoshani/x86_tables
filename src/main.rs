@@ -120,6 +120,9 @@ enum OpInfo {
     /// memory access by absolute address, for example `mov rcx, [0x1234]`
     MemOffset(MemOffsetOpInfo),
 
+    /// an implicit operand which is not actually specified in the instruction, only its size it relevant.
+    Implicit(OpSizeInfo),
+
     Cond,
 }
 impl OpInfo {
@@ -550,6 +553,43 @@ fn table() -> Vec<InsnInfo> {
                 mem_operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
             }),
             OpInfo::AX_16_32_64_DEF_32,
+        ],
+    }));
+    // 0xa4
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movs",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xa5
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movs",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
+    }));
+    // 0xa6
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cmps",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_ALWAYS_8)],
+    }));
+    // 0xa7
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cmps",
+        ops: &[OpInfo::Implicit(OpSizeInfo::SZ_16_32_64_DEF_32)],
+    }));
+    // 0xa8
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "test",
+        ops: &[OpInfo::AL, OpInfo::IMM_8_NO_EXT],
+    }));
+    // 0xa9
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "test",
+        ops: &[
+            OpInfo::AX_16_32_64_DEF_32,
+            OpInfo::Imm(ImmOpInfo {
+                encoded_size: OpSizeInfo::SZ_IMM_ENCODING_16_32,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                extend_kind: ImmExtendKind::SignExtend,
+            }),
         ],
     }));
 
