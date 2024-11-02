@@ -929,6 +929,78 @@ fn table() -> Vec<InsnInfo> {
             },
         ],
     }));
+    // 0xf8
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "clc",
+        ops: &[],
+    }));
+    // 0xf9
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "stc",
+        ops: &[],
+    }));
+    // 0xfa
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cli",
+        ops: &[],
+    }));
+    // 0xfb
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "sti",
+        ops: &[],
+    }));
+    // 0xfc
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "cld",
+        ops: &[],
+    }));
+    // 0xfd
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "std",
+        ops: &[],
+    }));
+    // 0xfe
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            // 0
+            RegularInsnInfo {
+                mnemonic: "inc",
+                ops: &[OpInfo::RM_8],
+            },
+            // 1
+            RegularInsnInfo {
+                mnemonic: "dec",
+                ops: &[OpInfo::RM_8],
+            },
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+        ],
+    }));
+    // 0xff
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            // 0
+            RegularInsnInfo {
+                mnemonic: "inc",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            // 1
+            RegularInsnInfo {
+                mnemonic: "dec",
+                ops: &[OpInfo::RM_16_32_64_DEF_32],
+            },
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+            RegularInsnInfo::UNSUPPORTED,
+        ],
+    }));
 
     table
 }
