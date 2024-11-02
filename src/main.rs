@@ -102,14 +102,16 @@ struct RegOpInfo {
 }
 
 #[derive(Debug, Clone)]
-struct RmOpInfo {
+struct SpecificRegOpInfo {
+    reg_64_bit_name: &'static str,
     size: OpSizeInfo,
 }
 
 #[derive(Debug, Clone)]
-struct SpecificRegOpInfo {
+struct ZextSpecificRegOpInfo {
     reg_64_bit_name: &'static str,
     size: OpSizeInfo,
+    extended_size: OpSizeInfo,
 }
 
 #[derive(Debug, Clone)]
@@ -133,6 +135,9 @@ enum OpInfo {
 
     /// specific register which is enforced by the opcode
     SpecificReg(SpecificRegOpInfo),
+
+    /// zero extended specific register which is enforced by the opcode
+    ZextSpecificReg(ZextSpecificRegOpInfo),
 
     /// relative offset used for relative jumps
     Rel(OpSizeInfo),
@@ -180,6 +185,10 @@ impl OpInfo {
     const DX_16_32_64_DEF_32: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
         reg_64_bit_name: "rdx",
+    });
+    const CL: Self = Self::SpecificReg(SpecificRegOpInfo {
+        size: OpSizeInfo::SZ_ALWAYS_8,
+        reg_64_bit_name: "rcx",
     });
 
     /// an 8-bit immediate which should not be sign/zero extended.
@@ -763,6 +772,27 @@ fn table() -> Vec<InsnInfo> {
                 OpInfo::SpecificImm(SpecificImmOpInfo {
                     value: 1,
                     operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                }),
+            ],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0xd2
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[OpInfo::RM_8, OpInfo::CL],
+            SHIFT_BINOP_MNEMONICS,
+        ),
+    ));
+    // 0xd3
+    table.push(InsnInfo::ModrmRegOpcodeExt(
+        ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
+            &[
+                OpInfo::RM_16_32_64_DEF_32,
+                OpInfo::ZextSpecificReg(ZextSpecificRegOpInfo {
+                    reg_64_bit_name: "rcx",
+                    size: OpSizeInfo::SZ_ALWAYS_8,
+                    extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 }),
             ],
             SHIFT_BINOP_MNEMONICS,
