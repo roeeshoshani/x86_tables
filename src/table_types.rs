@@ -2,7 +2,7 @@ pub type Mnemonic = &'static str;
 
 pub const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OpSize {
     S8,
     S16,
@@ -10,7 +10,7 @@ pub enum OpSize {
     S64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct OpSizeInfo {
     pub with_operand_size_override: OpSize,
     pub mode_32: OpSize,
@@ -51,61 +51,61 @@ impl OpSizeInfo {
     };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ImmExtendKind {
     SignExtend,
     ZeroExtend,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ImmOpInfo {
     pub encoded_size: OpSizeInfo,
     pub extended_size: OpSizeInfo,
     pub extend_kind: ImmExtendKind,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecificImmOpInfo {
     pub value: u64,
     pub operand_size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MemOffsetOpInfo {
     pub mem_operand_size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RegEncoding {
     Modrm,
     Opcode,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegOpInfo {
     pub encoding: RegEncoding,
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecificRegOpInfo {
     pub reg_64_bit_name: &'static str,
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ZextSpecificRegOpInfo {
     pub reg_64_bit_name: &'static str,
     pub size: OpSizeInfo,
     pub extended_size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RelOpInfo {
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OpInfo {
     /// immediate operand
     Imm(ImmOpInfo),

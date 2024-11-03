@@ -37,6 +37,23 @@ impl CEmitter {
     }
 }
 
+fn min_bits_required_for_field(values_amount: usize) -> usize {
+    // round up log2
+    (values_amount - 1).ilog2() as usize + 1
+}
+
+fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
+    if values_amount <= (1 << 8) {
+        "uint8_t"
+    } else if values_amount <= (1 << 16) {
+        "uint16_t"
+    } else if values_amount <= (1 << 32) {
+        "uint32_t"
+    } else {
+        "uint64_t"
+    }
+}
+
 pub struct CStructEmitter<'a> {
     emitter: &'a mut CEmitter,
     struct_name: &'static str,
@@ -48,6 +65,22 @@ impl<'a> CStructEmitter<'a> {
         self.emitter.code.push_str(field_name);
         self.emitter.code.push(';');
         self
+    }
+    pub fn bit_field(self, field_name: &str, field_type: &str, bits_amount: usize) -> Self {
+        self.emitter.code.push_str(field_type);
+        self.emitter.code.push(' ');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push(':');
+        self.emitter.code.push_str(&bits_amount.to_string());
+        self.emitter.code.push(';');
+        self
+    }
+    pub fn bit_field_min_size(self, field_name: &str, values_amount: usize) -> Self {
+        self.bit_field(
+            field_name,
+            min_int_type_required_for_field(values_amount),
+            min_bits_required_for_field(values_amount),
+        )
     }
     pub fn emit(self) {
         self.emitter.code.push('}');

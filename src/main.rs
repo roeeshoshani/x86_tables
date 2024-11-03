@@ -12,35 +12,30 @@ mod table_types;
 
 const CODEGEN_TYPES: &str = include_str!("codegen_types.h");
 
-fn table_all_mnemonics<'a>(table: &'a [InsnInfo]) -> impl Iterator<Item = Mnemonic> + 'a {
+fn table_all_regular_insn_infos<'a>(
+    table: &'a [InsnInfo],
+) -> impl Iterator<Item = &'a RegularInsnInfo> + 'a {
     table
         .iter()
         .map(|insn_info| match insn_info {
-            InsnInfo::Regular(info) => Either::Left(std::iter::once(info.mnemonic)),
-            InsnInfo::ModrmRegOpcodeExt(modrm_reg_opcode_ext_info) => Either::Right(
-                modrm_reg_opcode_ext_info
-                    .by_reg_value
-                    .iter()
-                    .map(|info| info.mnemonic),
-            ),
+            InsnInfo::Regular(info) => Either::Left(std::iter::once(info)),
+            InsnInfo::ModrmRegOpcodeExt(modrm_reg_opcode_ext_info) => {
+                Either::Right(modrm_reg_opcode_ext_info.by_reg_value.iter())
+            }
         })
         .flatten()
 }
 
-fn mnemonic_to_c_variant_name(mnemonic: Mnemonic) -> String {
-    format!("MNEMONIC_{}", mnemonic.to_uppercase())
+fn table_all_mnemonics<'a>(table: &'a [InsnInfo]) -> impl Iterator<Item = Mnemonic> + 'a {
+    table_all_regular_insn_infos(table).map(|insn_info| insn_info.mnemonic)
 }
 
-fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
-    if values_amount <= (1 << 8) {
-        "uint8_t"
-    } else if values_amount <= (1 << 16) {
-        "uint16_t"
-    } else if values_amount <= (1 << 32) {
-        "uint32_t"
-    } else {
-        "uint64_t"
-    }
+fn table_all_ops<'a>(table: &'a [InsnInfo]) -> impl Iterator<Item = Ops> + 'a {
+    table_all_regular_insn_infos(table).map(|insn_info| insn_info.ops)
+}
+
+fn mnemonic_to_c_variant_name(mnemonic: Mnemonic) -> String {
+    format!("MNEMONIC_{}", mnemonic.to_uppercase())
 }
 
 fn main() {
@@ -48,10 +43,11 @@ fn main() {
     let first_opcode_byte_table = gen_first_opcode_byte_table();
 
     let mut mnemonics: HashSet<_> = table_all_mnemonics(&first_opcode_byte_table).collect();
-
     // a psuedo mnemonic used to represent the fact that this instruction required further identification using the reg field
     // of the modrm field.
     mnemonics.insert("MNEOMNIC_MODRM_REG_OPCODE_EXT");
+
+    let ops: HashSet<_> = table_all_ops(&first_opcode_byte_table).collect();
 
     emitter.emit_enum(
         "mnemonic_t",
@@ -60,12 +56,11 @@ fn main() {
 
     emitter
         .begin_struct("insn_info_t")
-        .field(
-            "mnemonic",
-            &min_int_type_required_for_field(mnemonics.len()),
-        )
+        .bit_field_min_size("mnemonic", mnemonics.len())
+        .bit_field_min_size("ops_index", ops.len())
         .emit();
-    // .field("ops_index", );
 
     println!("{}", emitter.code());
+    println!("{}", mnemonics.len());
+    println!("{}", ops.len());
 }
