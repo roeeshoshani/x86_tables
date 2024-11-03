@@ -86,6 +86,10 @@ fn specific_imm_to_c_variant_name(specific_imm_value_variant_name: &str) -> Stri
     )
 }
 
+fn op_size_to_c_variant_name(op_size: OpSize) -> String {
+    format!("OP_SIZE_{}", op_size as u32)
+}
+
 fn iter_collect_unique<T: Eq + Hash, I: Iterator<Item = T>>(iter: I) -> Vec<T> {
     let set: HashSet<T> = iter.collect();
     set.into_iter().collect()
@@ -181,6 +185,21 @@ fn main() {
     insn_info_union.emit();
 
     emitter.emit_enum(
+        "op_size_t",
+        OpSize::VARIANT_NAMES
+            .iter()
+            .map(|x| format!("OP_SIZE_{}", x.strip_prefix("S").unwrap())),
+    );
+
+    emitter
+        .begin_struct("op_size_info_t")
+        .bit_field("with_operand_size_override", OpSize::VARIANT_NAMES.len())
+        .bit_field("mode_32", OpSize::VARIANT_NAMES.len())
+        .bit_field("mode_64", OpSize::VARIANT_NAMES.len())
+        .bit_field("mode_64_with_rex_w", OpSize::VARIANT_NAMES.len())
+        .emit();
+
+    emitter.emit_enum(
         "op_kind_t",
         OpInfo::VARIANT_NAMES
             .into_iter()
@@ -262,7 +281,25 @@ fn main() {
     op_info_union.begin_struct_variant("cond").emit();
     op_info_union.emit();
 
-    let mut op_info_table = emitter.begin_table("op_info_t", "op_infos");
+    let mut op_size_info_table = emitter.begin_table("op_size_info_t", "op_size_infos_table");
+    for op_size_info in &uniq_op_size_infos {
+        op_size_info_table
+            .begin_entry()
+            .field(
+                "with_operand_size_override",
+                &op_size_to_c_variant_name(op_size_info.with_operand_size_override),
+            )
+            .field("mode_32", &op_size_to_c_variant_name(op_size_info.mode_32))
+            .field("mode_64", &op_size_to_c_variant_name(op_size_info.mode_64))
+            .field(
+                "mode_64_with_rex_w",
+                &op_size_to_c_variant_name(op_size_info.mode_64_with_rex_w),
+            )
+            .emit();
+    }
+    op_size_info_table.emit();
+
+    let mut op_info_table = emitter.begin_table("op_info_t", "op_infos_table");
     for op_info in &uniq_op_infos {
         let mut entry = op_info_table.begin_entry();
 
@@ -383,7 +420,7 @@ fn main() {
     }
     laid_out_ops_infos_table.emit();
 
-    let mut first_opcde_byte_table = emitter.begin_table("insn_info_t", "first_opcode_byte");
+    let mut first_opcde_byte_table = emitter.begin_table("insn_info_t", "first_opcode_byte_table");
     for insn_info in &first_opcode_byte_table {
         let mut entry = first_opcde_byte_table.begin_entry();
         match insn_info {

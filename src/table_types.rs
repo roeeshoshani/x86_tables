@@ -1,15 +1,15 @@
-use delve::{EnumDisplay, EnumToStr, EnumVariantNames};
+use delve::{EnumDisplay, EnumFields, EnumToStr, EnumVariantNames};
 
 pub type Mnemonic = &'static str;
 
 pub const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumVariantNames)]
 pub enum OpSize {
-    S8,
-    S16,
-    S32,
-    S64,
+    S8 = 8,
+    S16 = 16,
+    S32 = 32,
+    S64 = 64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

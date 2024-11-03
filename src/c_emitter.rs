@@ -31,6 +31,16 @@ impl CEmitter {
         }
     }
 
+    pub fn begin_struct(&mut self, struct_name: &'static str) -> CStructEmitter {
+        self.code
+            .push_str("typedef struct __attribute__((packed)) {\n");
+
+        CStructEmitter {
+            emitter: self,
+            struct_name,
+        }
+    }
+
     pub fn begin_union(&mut self, union_name: &'static str) -> CUnionEmitter {
         self.code
             .push_str("typedef union __attribute__((packed)) {\n");
