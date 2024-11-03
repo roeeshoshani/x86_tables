@@ -1,9 +1,4 @@
-use std::{
-    cmp::max,
-    collections::HashSet,
-    hash::Hash,
-    path::{Path, PathBuf},
-};
+use std::{cmp::max, collections::HashSet, hash::Hash, path::PathBuf};
 
 use c_emitter::{min_int_type_required_for_field, CEmitter};
 use clap::Parser;
