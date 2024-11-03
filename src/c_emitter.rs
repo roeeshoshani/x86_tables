@@ -46,7 +46,7 @@ impl CEmitter {
         self.code.push_str(">\n");
     }
 
-    pub fn r#enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
+    pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,

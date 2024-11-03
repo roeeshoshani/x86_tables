@@ -149,7 +149,7 @@ fn main() {
         table_all_modrm_reg_opcode_ext_tables(&first_opcode_byte_table).cloned(),
     );
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "mnemonic_t",
         uniq_mnemonics
             .iter()
@@ -180,92 +180,91 @@ fn main() {
         .emit();
     insn_info_union.emit();
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "op_kind_t",
         OpInfo::VARIANT_NAMES
             .into_iter()
             .map(|x| op_kind_to_c_variant_name(x)),
     );
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "imm_ext_kind_t",
         ImmExtendKind::VARIANT_NAMES
             .into_iter()
             .map(|x| imm_ext_kind_to_c_variant_name(x)),
     );
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "reg_encoding_t",
         RegEncoding::VARIANT_NAMES
             .into_iter()
             .map(|x| reg_encoding_to_c_variant_name(x)),
     );
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "specific_reg_t",
         SpecificReg::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_reg_to_c_variant_name(x)),
     );
 
-    emitter.r#enum(
+    emitter.emit_enum(
         "specific_imm_t",
         SpecificImm::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_imm_to_c_variant_name(x)),
     );
 
-    let mut op_info_union_emitter =
-        emitter.begin_tagged_union("op_info_t", OpInfo::VARIANT_NAMES.len());
-    op_info_union_emitter
+    let mut op_info_union = emitter.begin_tagged_union("op_info_t", OpInfo::VARIANT_NAMES.len());
+    op_info_union
         .begin_struct_variant("imm")
         .bit_field("encoded_size_info_index", uniq_op_size_infos.len())
         .bit_field("extended_size_info_index", uniq_op_size_infos.len())
         .bit_field("extend_kind", ImmExtendKind::VARIANT_NAMES.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("specific_imm")
         .bit_field("operand_size_info_index", uniq_op_size_infos.len())
         .bit_field("value", SpecificImm::VARIANT_NAMES.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("reg")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .bit_field("encoding", RegEncoding::VARIANT_NAMES.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("rm")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("specific_reg")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .bit_field("reg", SpecificReg::VARIANT_NAMES.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("zext_specific_reg")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .bit_field("extended_size_info_index", uniq_op_size_infos.len())
         .bit_field("reg", SpecificReg::VARIANT_NAMES.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("rel")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("mem_offset")
         .bit_field("mem_operand_size_info_index", uniq_op_size_infos.len())
         .emit();
-    op_info_union_emitter
+    op_info_union
         .begin_struct_variant("implicit")
         .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
-    op_info_union_emitter.begin_struct_variant("cond").emit();
-    op_info_union_emitter.emit();
+    op_info_union.begin_struct_variant("cond").emit();
+    op_info_union.emit();
 
-    let mut op_info_table_emitter = emitter.begin_table("op_info_t", "op_infos");
+    let mut op_info_table = emitter.begin_table("op_info_t", "op_infos");
     for op_info in &uniq_op_infos {
-        let mut entry = op_info_table_emitter.begin_entry();
+        let mut entry = op_info_table.begin_entry();
 
         let op_kind_c_variant = op_kind_to_c_variant_name(op_info.into());
 
@@ -371,23 +370,22 @@ fn main() {
         }
         entry.emit();
     }
-    op_info_table_emitter.emit();
+    op_info_table.emit();
 
-    let mut laid_out_ops_infos_table_emitter = emitter.begin_table(
+    let mut laid_out_ops_infos_table = emitter.begin_table(
         &min_int_type_required_for_field(uniq_op_infos.len()),
         "laid_out_ops_infos_table",
     );
     for &ops_info in &uniq_ops_infos {
         for op_info in ops_info {
-            laid_out_ops_infos_table_emitter.int_entry(find_index(op_info, &uniq_op_infos))
+            laid_out_ops_infos_table.int_entry(find_index(op_info, &uniq_op_infos))
         }
     }
-    laid_out_ops_infos_table_emitter.emit();
+    laid_out_ops_infos_table.emit();
 
-    let mut first_opcde_byte_table_emitter =
-        emitter.begin_table("insn_info_t", "first_opcode_byte");
+    let mut first_opcde_byte_table = emitter.begin_table("insn_info_t", "first_opcode_byte");
     for insn_info in &first_opcode_byte_table {
-        let mut entry = first_opcde_byte_table_emitter.begin_entry();
+        let mut entry = first_opcde_byte_table.begin_entry();
         match insn_info {
             InsnInfo::Regular(info) => entry
                 .begin_struct_field("regular")
@@ -412,7 +410,7 @@ fn main() {
         }
         entry.emit();
     }
-    first_opcde_byte_table_emitter.emit();
+    first_opcde_byte_table.emit();
 
     println!("{}", emitter.code());
 }
