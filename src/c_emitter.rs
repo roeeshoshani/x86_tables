@@ -22,7 +22,7 @@ impl CEmitter {
     pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
     where
         S: AsRef<str>,
-        I: Iterator<Item = S>,
+        I: IntoIterator<Item = S>,
     {
         self.code.push_str("typedef enum {");
         for variant in variants {
@@ -31,7 +31,7 @@ impl CEmitter {
         }
         self.code.push('}');
         self.code.push_str(enum_name);
-        self.code.push(';');
+        self.code.push_str(";\n");
     }
 
     pub fn begin_struct(&mut self, struct_name: &'static str) -> CStructEmitter {
@@ -52,12 +52,12 @@ impl CEmitter {
     }
 }
 
-fn min_bits_required_for_field(values_amount: usize) -> usize {
+pub fn min_bits_required_for_field(values_amount: usize) -> usize {
     // round up log2
     (values_amount - 1).ilog2() as usize + 1
 }
 
-fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
+pub fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
     if values_amount <= (1 << 8) {
         "uint8_t"
     } else if values_amount <= (1 << 16) {
@@ -100,7 +100,7 @@ impl<'a> CStructEmitter<'a> {
     pub fn emit(self) {
         self.emitter.code.push('}');
         self.emitter.code.push_str(self.struct_name);
-        self.emitter.code.push(';');
+        self.emitter.code.push_str(";\n");
     }
 }
 
@@ -115,7 +115,7 @@ impl<'a> CTableEmitter<'a> {
         }
     }
     pub fn emit(self) {
-        self.emitter.code.push_str("};");
+        self.emitter.code.push_str("};\n");
     }
 }
 
@@ -132,6 +132,6 @@ impl<'a> CTableEntryEmitter<'a> {
         self
     }
     pub fn emit(self) {
-        self.emitter.code.push_str("},");
+        self.emitter.code.push_str("},\n");
     }
 }

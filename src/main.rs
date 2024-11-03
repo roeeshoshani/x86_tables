@@ -1,9 +1,11 @@
 use std::{cmp::max, collections::HashSet, hash::Hash};
 
 use c_emitter::CEmitter;
+use delve::VariantNames;
 use either::Either;
 use first_opcode_byte_table::gen_first_opcode_byte_table;
 use table_types::*;
+use to_snake_case::ToSnakeCase;
 
 mod c_emitter;
 mod first_opcode_byte_table;
@@ -46,6 +48,13 @@ fn table_all_modrm_reg_opcode_ext_tables<'a>(
 
 fn mnemonic_to_c_variant_name(mnemonic: Mnemonic) -> String {
     format!("MNEMONIC_{}", mnemonic.to_uppercase())
+}
+
+fn op_kind_to_c_variant_name(op_kind_variant_name: &str) -> String {
+    format!(
+        "OP_KIND_{}",
+        op_kind_variant_name.to_snake_case().to_uppercase()
+    )
 }
 
 fn iter_collect_unique<T: Eq + Hash, I: Iterator<Item = T>>(iter: I) -> Vec<T> {
@@ -108,6 +117,13 @@ fn main() {
             .emit()
     }
     first_opcde_byte_table_emitter.emit();
+
+    emitter.emit_enum(
+        "op_kind_t",
+        OpInfo::VARIANT_NAMES
+            .into_iter()
+            .map(|x| op_kind_to_c_variant_name(x)),
+    );
 
     println!("{}", emitter.code());
 }

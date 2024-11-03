@@ -1,3 +1,5 @@
+use delve::{EnumDisplay, EnumVariantNames};
+
 pub type Mnemonic = &'static str;
 
 pub const MNEMONIC_UNSUPPORTED: Mnemonic = "unsupported";
@@ -105,7 +107,7 @@ pub struct RelOpInfo {
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumDisplay, EnumVariantNames)]
 pub enum OpInfo {
     /// immediate operand
     Imm(ImmOpInfo),
