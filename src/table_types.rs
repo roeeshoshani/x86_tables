@@ -1,4 +1,4 @@
-use delve::{EnumDisplay, EnumVariantNames};
+use delve::{EnumDisplay, EnumToStr, EnumVariantNames};
 
 pub type Mnemonic = &'static str;
 
@@ -53,7 +53,7 @@ impl OpSizeInfo {
     };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames, EnumToStr)]
 pub enum ImmExtendKind {
     SignExtend,
     ZeroExtend,
@@ -66,8 +66,9 @@ pub struct ImmOpInfo {
     pub extend_kind: ImmExtendKind,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames, EnumToStr)]
 pub enum SpecificImm {
+    Zero,
     One,
 }
 
@@ -82,7 +83,7 @@ pub struct MemOffsetOpInfo {
     pub mem_operand_size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames, EnumToStr)]
 pub enum RegEncoding {
     Modrm,
     Opcode,
@@ -94,7 +95,7 @@ pub struct RegOpInfo {
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames, EnumToStr)]
 pub enum SpecificReg {
     Rax,
     Rdx,
@@ -119,7 +120,7 @@ pub struct RelOpInfo {
     pub size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumDisplay, EnumVariantNames)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumDisplay, EnumVariantNames, EnumToStr)]
 pub enum OpInfo {
     /// immediate operand
     Imm(ImmOpInfo),

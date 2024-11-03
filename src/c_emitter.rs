@@ -21,16 +21,24 @@ impl CEmitter {
         &mut self,
         union_name: &'static str,
         kinds_amount: usize,
-    ) -> CUnionEmitter {
+    ) -> CTaggedUnionEmitter {
         self.code.push_str("typedef union {\n");
 
         let kind_field = gen_bit_field_min_size("kind", kinds_amount);
         self.code.push_str(&kind_field);
 
-        CUnionEmitter {
+        CTaggedUnionEmitter {
             emitter: self,
             union_name,
             kind_field,
+        }
+    }
+
+    pub fn begin_union(&mut self, union_name: &'static str) -> CStructEmitter {
+        self.code.push_str("typedef union {\n");
+        CStructEmitter {
+            emitter: self,
+            struct_name: union_name,
         }
     }
 
@@ -110,12 +118,12 @@ pub fn gen_bit_field_min_size(field_name: &str, values_amount: usize) -> String 
     format!("{int_type} {field_name}: {bits_required};\n")
 }
 
-pub struct CUnionEmitter<'a> {
+pub struct CTaggedUnionEmitter<'a> {
     emitter: &'a mut CEmitter,
     union_name: &'static str,
     kind_field: String,
 }
-impl<'a> CUnionEmitter<'a> {
+impl<'a> CTaggedUnionEmitter<'a> {
     pub fn begin_struct_variant(&mut self, variant_name: &'static str) -> CStructEmitter {
         self.emitter.code.push_str("struct {\n");
         self.emitter.code.push_str(&self.kind_field);
@@ -149,6 +157,13 @@ pub struct CStructEmitter<'a> {
     struct_name: &'static str,
 }
 impl<'a> CStructEmitter<'a> {
+    pub fn begin_embedded_struct(&mut self, field_name: &'static str) -> CStructEmitter {
+        self.emitter.code.push_str("struct {\n");
+        CStructEmitter {
+            emitter: self.emitter,
+            struct_name: field_name,
+        }
+    }
     pub fn field(self, field_name: &str, field_type: &str) -> Self {
         self.emitter.code.push_str(field_type);
         self.emitter.code.push(' ');
@@ -166,15 +181,11 @@ impl<'a> CStructEmitter<'a> {
         self
     }
     pub fn bit_field_min_size(self, field_name: &str, values_amount: usize) -> Self {
-        if values_amount > 1 {
-            self.bit_field(
-                field_name,
-                min_int_type_required_for_field(values_amount),
-                min_bits_required_for_field(values_amount),
-            )
-        } else {
-            self
-        }
+        self.bit_field(
+            field_name,
+            min_int_type_required_for_field(values_amount),
+            min_bits_required_for_field(values_amount),
+        )
     }
     pub fn emit(self) {
         self.emitter.code.push('}');
@@ -187,21 +198,25 @@ pub struct CTableEmitter<'a> {
     emitter: &'a mut CEmitter,
 }
 impl<'a> CTableEmitter<'a> {
-    pub fn begin_entry(&mut self) -> CTableEntryEmitter {
+    pub fn begin_entry(&mut self) -> CStructValueEmitter {
         self.emitter.code.push('{');
-        CTableEntryEmitter {
+        CStructValueEmitter {
             emitter: self.emitter,
         }
+    }
+    pub fn emit_int_entry(&mut self, value: usize) {
+        self.emitter.code.push_str(&value.to_string());
+        self.emitter.code.push_str(",\n");
     }
     pub fn emit(self) {
         self.emitter.code.push_str("};\n");
     }
 }
 
-pub struct CTableEntryEmitter<'a> {
+pub struct CStructValueEmitter<'a> {
     emitter: &'a mut CEmitter,
 }
-impl<'a> CTableEntryEmitter<'a> {
+impl<'a> CStructValueEmitter<'a> {
     pub fn field(self, field_name: &str, value: &str) -> Self {
         self.emitter.code.push('.');
         self.emitter.code.push_str(field_name);
@@ -209,6 +224,22 @@ impl<'a> CTableEntryEmitter<'a> {
         self.emitter.code.push_str(value);
         self.emitter.code.push(',');
         self
+    }
+    pub fn field_int(self, field_name: &str, value: usize) -> Self {
+        self.emitter.code.push('.');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push('=');
+        self.emitter.code.push_str(&value.to_string());
+        self.emitter.code.push(',');
+        self
+    }
+    pub fn begin_struct_field(&mut self, field_name: &str) -> CStructValueEmitter {
+        self.emitter.code.push('.');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push_str("={");
+        CStructValueEmitter {
+            emitter: self.emitter,
+        }
     }
     pub fn emit(self) {
         self.emitter.code.push_str("},\n");
