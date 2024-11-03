@@ -13,6 +13,10 @@ impl CEmitter {
         &self.code
     }
 
+    pub fn pragma_once(&mut self) {
+        self.code.push_str("#pragma once\n");
+    }
+
     pub fn begin_tagged_union(
         &mut self,
         union_name: &'static str,
@@ -54,12 +58,6 @@ impl CEmitter {
         self.code.push_str("#include <");
         self.code.push_str(header_file_name);
         self.code.push_str(">\n");
-    }
-
-    pub fn include(&mut self, header_file_name: &str) {
-        self.code.push_str("#include \"");
-        self.code.push_str(header_file_name);
-        self.code.push_str("\"\n");
     }
 
     pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)

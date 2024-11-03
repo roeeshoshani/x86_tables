@@ -124,6 +124,7 @@ fn generate_code() -> GeneratedCode {
     let mut types_file = CEmitter::new();
     let mut tables_file = CEmitter::new();
 
+    types_file.pragma_once();
     types_file.include_system("stdint.h");
 
     let first_opcode_byte_table = gen_first_opcode_byte_table();
@@ -469,13 +470,20 @@ fn generate_code() -> GeneratedCode {
 
 #[derive(Parser)]
 struct Cli {
-    types_file: PathBuf,
-    tables_file: PathBuf,
+    output_dir: PathBuf,
 }
 
 fn main() {
     let cli = Cli::parse();
     let generated_code = generate_code();
-    std::fs::write(cli.types_file, generated_code.types_file.code()).unwrap();
-    std::fs::write(cli.tables_file, generated_code.tables_file.code()).unwrap();
+    std::fs::write(
+        cli.output_dir.join("types.h"),
+        generated_code.types_file.code(),
+    )
+    .unwrap();
+    std::fs::write(
+        cli.output_dir.join("tables.c"),
+        generated_code.tables_file.code(),
+    )
+    .unwrap();
 }
