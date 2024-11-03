@@ -13,16 +13,13 @@ impl CEmitter {
         &self.code
     }
 
-    pub fn emit_raw(&mut self, code: &str) {
-        self.code.push_str(code)
-    }
-
     pub fn begin_tagged_union(
         &mut self,
         union_name: &'static str,
         kinds_amount: usize,
     ) -> CTaggedUnionEmitter {
-        self.code.push_str("typedef union {\n");
+        self.code
+            .push_str("typedef union __attribute__((packed)) {\n");
 
         let kind_field = gen_bit_field_min_size("kind", kinds_amount);
         self.code.push_str(&kind_field);
@@ -34,26 +31,22 @@ impl CEmitter {
         }
     }
 
-    pub fn begin_union(&mut self, union_name: &'static str, packed: bool) -> CStructEmitter {
-        if packed {
-            self.code
-                .push_str("typedef union __attribute__((packed)) {\n");
-        } else {
-            self.code.push_str("typedef union {\n");
-        }
-        CStructEmitter {
+    pub fn begin_union(&mut self, union_name: &'static str) -> CUnionEmitter {
+        self.code
+            .push_str("typedef union __attribute__((packed)) {\n");
+        CUnionEmitter {
             emitter: self,
-            struct_name: union_name,
+            union_name,
         }
     }
 
-    pub fn emit_system_include(&mut self, header_file_name: &str) {
+    pub fn system_include(&mut self, header_file_name: &str) {
         self.code.push_str("#include <");
         self.code.push_str(header_file_name);
         self.code.push_str(">\n");
     }
 
-    pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
+    pub fn r#enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
@@ -66,19 +59,6 @@ impl CEmitter {
         self.code.push('}');
         self.code.push_str(enum_name);
         self.code.push_str(";\n");
-    }
-
-    pub fn begin_struct(&mut self, struct_name: &'static str, packed: bool) -> CStructEmitter {
-        if packed {
-            self.code
-                .push_str("typedef struct __attribute__((packed)) {");
-        } else {
-            self.code.push_str("typedef struct {");
-        }
-        CStructEmitter {
-            emitter: self,
-            struct_name,
-        }
     }
 
     pub fn begin_table(&mut self, struct_name: &str, table_name: &str) -> CTableEmitter {
@@ -134,18 +114,10 @@ pub struct CTaggedUnionEmitter<'a> {
     kind_field: String,
 }
 impl<'a> CTaggedUnionEmitter<'a> {
-    pub fn begin_struct_variant(
-        &mut self,
-        variant_name: &'static str,
-        packed: bool,
-    ) -> CStructEmitter {
-        if packed {
-            self.emitter
-                .code
-                .push_str("struct __attribute__((packed)) {\n");
-        } else {
-            self.emitter.code.push_str("struct {\n");
-        }
+    pub fn begin_struct_variant(&mut self, variant_name: &'static str) -> CStructEmitter {
+        self.emitter
+            .code
+            .push_str("struct __attribute__((packed)) {\n");
         self.emitter.code.push_str(&self.kind_field);
         CStructEmitter {
             emitter: self.emitter,
@@ -160,14 +132,31 @@ impl<'a> CTaggedUnionEmitter<'a> {
     }
 }
 
-pub struct CUnionStructVariantEmitter<'a> {
+pub struct CUnionEmitter<'a> {
     emitter: &'a mut CEmitter,
-    variant_name: &'static str,
+    union_name: &'static str,
 }
-impl<'a> CUnionStructVariantEmitter<'a> {
+impl<'a> CUnionEmitter<'a> {
+    pub fn begin_embedded_struct(&mut self, field_name: &'static str) -> CStructEmitter {
+        self.emitter
+            .code
+            .push_str("struct __attribute__((packed)) {\n");
+        CStructEmitter {
+            emitter: self.emitter,
+            struct_name: field_name,
+        }
+    }
+
+    pub fn bit_field(&mut self, field_name: &'static str, values_amount: usize) -> &mut Self {
+        self.emitter
+            .code
+            .push_str(&gen_bit_field_min_size(field_name, values_amount));
+        self
+    }
+
     pub fn emit(self) {
         self.emitter.code.push('}');
-        self.emitter.code.push_str(self.variant_name);
+        self.emitter.code.push_str(self.union_name);
         self.emitter.code.push_str(";\n");
     }
 }
@@ -177,47 +166,13 @@ pub struct CStructEmitter<'a> {
     struct_name: &'static str,
 }
 impl<'a> CStructEmitter<'a> {
-    pub fn begin_embedded_struct(
-        &mut self,
-        field_name: &'static str,
-        packed: bool,
-    ) -> CStructEmitter {
-        if packed {
-            self.emitter
-                .code
-                .push_str("struct __attribute__((packed)) {\n");
-        } else {
-            self.emitter.code.push_str("struct {\n");
-        }
-        CStructEmitter {
-            emitter: self.emitter,
-            struct_name: field_name,
-        }
-    }
-    pub fn field(self, field_name: &str, field_type: &str) -> Self {
-        self.emitter.code.push_str(field_type);
-        self.emitter.code.push(' ');
-        self.emitter.code.push_str(field_name);
-        self.emitter.code.push(';');
+    pub fn bit_field(&mut self, field_name: &'static str, values_amount: usize) -> &mut Self {
+        self.emitter
+            .code
+            .push_str(&gen_bit_field_min_size(field_name, values_amount));
         self
     }
-    pub fn bit_field(self, field_name: &str, field_type: &str, bits_amount: usize) -> Self {
-        self.emitter.code.push_str(field_type);
-        self.emitter.code.push(' ');
-        self.emitter.code.push_str(field_name);
-        self.emitter.code.push(':');
-        self.emitter.code.push_str(&bits_amount.to_string());
-        self.emitter.code.push(';');
-        self
-    }
-    pub fn bit_field_min_size(self, field_name: &str, values_amount: usize) -> Self {
-        self.bit_field(
-            field_name,
-            min_int_type_required_for_field(values_amount),
-            min_bits_required_for_field(values_amount),
-        )
-    }
-    pub fn emit(self) {
+    pub fn emit(&mut self) {
         self.emitter.code.push('}');
         self.emitter.code.push_str(self.struct_name);
         self.emitter.code.push_str(";\n");
@@ -234,7 +189,7 @@ impl<'a> CTableEmitter<'a> {
             emitter: self.emitter,
         }
     }
-    pub fn emit_int_entry(&mut self, value: usize) {
+    pub fn int_entry(&mut self, value: usize) {
         self.emitter.code.push_str(&value.to_string());
         self.emitter.code.push_str(",\n");
     }

@@ -1,6 +1,6 @@
 use std::{cmp::max, collections::HashSet, hash::Hash};
 
-use c_emitter::{gen_bit_field_min_size, min_int_type_required_for_field, CEmitter};
+use c_emitter::{min_int_type_required_for_field, CEmitter};
 use delve::VariantNames;
 use either::Either;
 use first_opcode_byte_table::gen_first_opcode_byte_table;
@@ -12,7 +12,6 @@ mod first_opcode_byte_table;
 mod table_gen_utils;
 mod table_types;
 
-const CODEGEN_TYPES: &str = include_str!("codegen_types.h");
 const MNEMONIC_MODRM_REG_OPCODE_EXT: &str = "modrm_reg_opcode_ext";
 
 fn table_all_regular_insn_infos<'a>(
@@ -111,7 +110,7 @@ fn main() {
     let mut emitter = CEmitter::new();
     let first_opcode_byte_table = gen_first_opcode_byte_table();
 
-    emitter.emit_system_include("stdint.h");
+    emitter.system_include("stdint.h");
 
     let mut uniq_mnemonics = iter_collect_unique(table_all_mnemonics(&first_opcode_byte_table));
     // a psuedo mnemonic used to represent the fact that this instruction required further identification using the reg field
@@ -150,66 +149,66 @@ fn main() {
         table_all_modrm_reg_opcode_ext_tables(&first_opcode_byte_table).cloned(),
     );
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "mnemonic_t",
         uniq_mnemonics
             .iter()
             .map(|x| mnemonic_to_c_variant_name(*x)),
     );
 
-    let mut insn_info_union = emitter.begin_union("insn_info_t", true);
-    insn_info_union = insn_info_union.bit_field_min_size("mnemonic", uniq_mnemonics.len());
+    let mut insn_info_union = emitter.begin_union("insn_info_t");
+    insn_info_union.bit_field("mnemonic", uniq_mnemonics.len());
     insn_info_union
-        .begin_embedded_struct("regular", true)
-        .bit_field_min_size("mnemonic", uniq_mnemonics.len())
-        .bit_field_min_size(
+        .begin_embedded_struct("regular")
+        .bit_field("mnemonic", uniq_mnemonics.len())
+        .bit_field(
             "first_op_index",
             max(
                 laid_out_ops_infos_len,
                 uniq_modrm_reg_opcode_ext_tables.len(),
             ),
         )
-        .bit_field_min_size("ops_amount", insn_max_ops + 1)
+        .bit_field("ops_amount", insn_max_ops + 1)
         .emit();
     insn_info_union
-        .begin_embedded_struct("modrm_reg_opcode_ext", true)
-        .bit_field_min_size("mnemonic", uniq_mnemonics.len())
-        .bit_field_min_size(
+        .begin_embedded_struct("modrm_reg_opcode_ext")
+        .bit_field("mnemonic", uniq_mnemonics.len())
+        .bit_field(
             "modrm_reg_table_index",
             uniq_modrm_reg_opcode_ext_tables.len(),
         )
         .emit();
     insn_info_union.emit();
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "op_kind_t",
         OpInfo::VARIANT_NAMES
             .into_iter()
             .map(|x| op_kind_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "imm_ext_kind_t",
         ImmExtendKind::VARIANT_NAMES
             .into_iter()
             .map(|x| imm_ext_kind_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "reg_encoding_t",
         RegEncoding::VARIANT_NAMES
             .into_iter()
             .map(|x| reg_encoding_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "specific_reg_t",
         SpecificReg::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_reg_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    emitter.r#enum(
         "specific_imm_t",
         SpecificImm::VARIANT_NAMES
             .into_iter()
@@ -219,51 +218,49 @@ fn main() {
     let mut op_info_union_emitter =
         emitter.begin_tagged_union("op_info_t", OpInfo::VARIANT_NAMES.len());
     op_info_union_emitter
-        .begin_struct_variant("imm", true)
-        .bit_field_min_size("encoded_size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("extended_size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("extend_kind", ImmExtendKind::VARIANT_NAMES.len())
+        .begin_struct_variant("imm")
+        .bit_field("encoded_size_info_index", uniq_op_size_infos.len())
+        .bit_field("extended_size_info_index", uniq_op_size_infos.len())
+        .bit_field("extend_kind", ImmExtendKind::VARIANT_NAMES.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("specific_imm", true)
-        .bit_field_min_size("operand_size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("value", SpecificImm::VARIANT_NAMES.len())
+        .begin_struct_variant("specific_imm")
+        .bit_field("operand_size_info_index", uniq_op_size_infos.len())
+        .bit_field("value", SpecificImm::VARIANT_NAMES.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("reg", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("encoding", RegEncoding::VARIANT_NAMES.len())
+        .begin_struct_variant("reg")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
+        .bit_field("encoding", RegEncoding::VARIANT_NAMES.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("rm", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
+        .begin_struct_variant("rm")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("specific_reg", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("reg", SpecificReg::VARIANT_NAMES.len())
+        .begin_struct_variant("specific_reg")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
+        .bit_field("reg", SpecificReg::VARIANT_NAMES.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("zext_specific_reg", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("extended_size_info_index", uniq_op_size_infos.len())
-        .bit_field_min_size("reg", SpecificReg::VARIANT_NAMES.len())
+        .begin_struct_variant("zext_specific_reg")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
+        .bit_field("extended_size_info_index", uniq_op_size_infos.len())
+        .bit_field("reg", SpecificReg::VARIANT_NAMES.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("rel", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
+        .begin_struct_variant("rel")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("mem_offset", true)
-        .bit_field_min_size("mem_operand_size_info_index", uniq_op_size_infos.len())
+        .begin_struct_variant("mem_offset")
+        .bit_field("mem_operand_size_info_index", uniq_op_size_infos.len())
         .emit();
     op_info_union_emitter
-        .begin_struct_variant("implicit", true)
-        .bit_field_min_size("size_info_index", uniq_op_size_infos.len())
+        .begin_struct_variant("implicit")
+        .bit_field("size_info_index", uniq_op_size_infos.len())
         .emit();
-    op_info_union_emitter
-        .begin_struct_variant("cond", true)
-        .emit();
+    op_info_union_emitter.begin_struct_variant("cond").emit();
     op_info_union_emitter.emit();
 
     let mut op_info_table_emitter = emitter.begin_table("op_info_t", "op_infos");
@@ -382,7 +379,7 @@ fn main() {
     );
     for &ops_info in &uniq_ops_infos {
         for op_info in ops_info {
-            laid_out_ops_infos_table_emitter.emit_int_entry(find_index(op_info, &uniq_op_infos))
+            laid_out_ops_infos_table_emitter.int_entry(find_index(op_info, &uniq_op_infos))
         }
     }
     laid_out_ops_infos_table_emitter.emit();
