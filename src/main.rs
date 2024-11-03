@@ -1,6 +1,12 @@
-use std::{cmp::max, collections::HashSet, hash::Hash};
+use std::{
+    cmp::max,
+    collections::HashSet,
+    hash::Hash,
+    path::{Path, PathBuf},
+};
 
 use c_emitter::{min_int_type_required_for_field, CEmitter};
+use clap::Parser;
 use delve::VariantNames;
 use either::Either;
 use first_opcode_byte_table::gen_first_opcode_byte_table;
@@ -461,4 +467,15 @@ fn generate_code() -> GeneratedCode {
     }
 }
 
-fn main() {}
+#[derive(Parser)]
+struct Cli {
+    types_file: PathBuf,
+    tables_file: PathBuf,
+}
+
+fn main() {
+    let cli = Cli::parse();
+    let generated_code = generate_code();
+    std::fs::write(cli.types_file, generated_code.types_file.code()).unwrap();
+    std::fs::write(cli.tables_file, generated_code.tables_file.code()).unwrap();
+}
