@@ -143,6 +143,8 @@ fn generate_code() -> GeneratedCode {
         .max()
         .unwrap();
 
+    types_file.define("X86_TABLES_INSN_MAX_OPS", &insn_max_ops.to_string());
+
     let uniq_op_infos = iter_collect_unique(laid_out_ops_infos.cloned());
     let uniq_op_size_infos = iter_collect_unique(
         uniq_op_infos

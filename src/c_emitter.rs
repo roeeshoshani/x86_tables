@@ -17,6 +17,13 @@ impl CEmitter {
         self.code.push_str("#pragma once\n");
     }
 
+    pub fn define(&mut self, define_name: &str, define_value: &str) {
+        self.code.push_str("#define ");
+        self.code.push_str(define_name);
+        self.code.push(' ');
+        self.code.push_str(define_value);
+    }
+
     pub fn begin_tagged_union(
         &mut self,
         union_name: &'static str,
