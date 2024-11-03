@@ -197,7 +197,7 @@ impl OpInfo {
 
 pub type Ops = &'static [OpInfo];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegularInsnInfo {
     pub mnemonic: Mnemonic,
     pub ops: Ops,
@@ -209,7 +209,7 @@ impl RegularInsnInfo {
     };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ModrmRegOpcodeExtInsnInfo {
     pub by_reg_value: [RegularInsnInfo; 8],
 }

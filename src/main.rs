@@ -1,4 +1,4 @@
-use std::{collections::HashSet, hash::Hash};
+use std::{cmp::max, collections::HashSet, hash::Hash};
 
 use c_emitter::CEmitter;
 use either::Either;
@@ -35,6 +35,15 @@ fn table_all_ops<'a>(table: &'a [InsnInfo]) -> impl Iterator<Item = Ops> + 'a {
     table_all_regular_insn_infos(table).map(|insn_info| insn_info.ops)
 }
 
+fn table_all_modrm_reg_opcode_ext_tables<'a>(
+    table: &'a [InsnInfo],
+) -> impl Iterator<Item = &'a ModrmRegOpcodeExtInsnInfo> + 'a {
+    table.iter().filter_map(|insn_info| match insn_info {
+        InsnInfo::Regular(_) => None,
+        InsnInfo::ModrmRegOpcodeExt(inner_table) => Some(inner_table),
+    })
+}
+
 fn mnemonic_to_c_variant_name(mnemonic: Mnemonic) -> String {
     format!("MNEMONIC_{}", mnemonic.to_uppercase())
 }
@@ -64,6 +73,10 @@ fn main() {
 
     let ops = iter_collect_unique(table_all_ops(&first_opcode_byte_table));
 
+    let modrm_reg_opcode_ext_tables = iter_collect_unique(
+        table_all_modrm_reg_opcode_ext_tables(&first_opcode_byte_table).cloned(),
+    );
+
     emitter.emit_enum(
         "mnemonic_t",
         mnemonics.iter().map(|x| mnemonic_to_c_variant_name(*x)),
@@ -72,7 +85,10 @@ fn main() {
     emitter
         .begin_struct("insn_info_t")
         .bit_field_min_size("mnemonic", mnemonics.len())
-        .bit_field_min_size("ops_index", ops.len())
+        .bit_field_min_size(
+            "ops_index",
+            max(ops.len(), modrm_reg_opcode_ext_tables.len()),
+        )
         .emit();
 
     let mut first_opcde_byte_table_emitter =
@@ -80,7 +96,10 @@ fn main() {
     for insn_info in first_opcode_byte_table {
         let (mnemonic, ops_index) = match insn_info {
             InsnInfo::Regular(info) => (info.mnemonic, find_index(info.ops, &ops)),
-            InsnInfo::ModrmRegOpcodeExt(_) => (MNEMONIC_MODRM_REG_OPCODE_EXT, 0),
+            InsnInfo::ModrmRegOpcodeExt(modrm_reg_table) => (
+                MNEMONIC_MODRM_REG_OPCODE_EXT,
+                find_index(modrm_reg_table, &modrm_reg_opcode_ext_tables),
+            ),
         };
         first_opcde_byte_table_emitter
             .begin_entry()
