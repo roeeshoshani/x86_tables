@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 
+use c_emitter::CEmitter;
 use either::Either;
 use first_opcode_byte_table::gen_first_opcode_byte_table;
 use table_types::*;
 
+mod c_emitter;
 mod first_opcode_byte_table;
 mod table_gen_utils;
 mod table_types;
@@ -25,8 +27,45 @@ fn table_all_mnemonics<'a>(table: &'a [InsnInfo]) -> impl Iterator<Item = Mnemon
         .flatten()
 }
 
+fn mnemonic_to_c_variant_name(mnemonic: Mnemonic) -> String {
+    format!("MNEMONIC_{}", mnemonic.to_uppercase())
+}
+
+fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
+    if values_amount <= (1 << 8) {
+        "uint8_t"
+    } else if values_amount <= (1 << 16) {
+        "uint16_t"
+    } else if values_amount <= (1 << 32) {
+        "uint32_t"
+    } else {
+        "uint64_t"
+    }
+}
+
 fn main() {
-    let t = gen_first_opcode_byte_table();
-    let mnemonics: HashSet<_> = table_all_mnemonics(&t).collect();
-    println!("{:?}", mnemonics);
+    let mut emitter = CEmitter::new();
+    let first_opcode_byte_table = gen_first_opcode_byte_table();
+
+    let mut mnemonics: HashSet<_> = table_all_mnemonics(&first_opcode_byte_table).collect();
+
+    // a psuedo mnemonic used to represent the fact that this instruction required further identification using the reg field
+    // of the modrm field.
+    mnemonics.insert("MNEOMNIC_MODRM_REG_OPCODE_EXT");
+
+    emitter.emit_enum(
+        "mnemonic_t",
+        mnemonics.iter().map(|x| mnemonic_to_c_variant_name(*x)),
+    );
+
+    emitter
+        .begin_struct("insn_info_t")
+        .field(
+            "mnemonic",
+            &min_int_type_required_for_field(mnemonics.len()),
+        )
+        .emit();
+    // .field("ops_index", );
+
+    println!("{}", emitter.code());
 }
