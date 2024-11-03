@@ -264,7 +264,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ops: &[
             OpInfo::AX_16_32_64_DEF_32,
             OpInfo::SpecificReg(SpecificRegOpInfo {
-                reg_64_bit_name: "rax",
+                reg: SpecificReg::Rax,
                 size: OpSizeInfo {
                     with_operand_size_override: OpSize::S8,
                     mode_32: OpSize::S16,
@@ -490,7 +490,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
             &[
                 OpInfo::RM_8,
                 OpInfo::SpecificImm(SpecificImmOpInfo {
-                    value: 1,
+                    value: SpecificImm::One,
                     operand_size: OpSizeInfo::SZ_ALWAYS_8,
                 }),
             ],
@@ -503,7 +503,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
             &[
                 OpInfo::RM_16_32_64_DEF_32,
                 OpInfo::SpecificImm(SpecificImmOpInfo {
-                    value: 1,
+                    value: SpecificImm::One,
                     operand_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 }),
             ],
@@ -523,7 +523,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
             &[
                 OpInfo::RM_16_32_64_DEF_32,
                 OpInfo::ZextSpecificReg(ZextSpecificRegOpInfo {
-                    reg_64_bit_name: "rcx",
+                    reg: SpecificReg::Rcx,
                     size: OpSizeInfo::SZ_ALWAYS_8,
                     extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
                 }),

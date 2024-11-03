@@ -17,6 +17,23 @@ impl CEmitter {
         self.code.push_str(code)
     }
 
+    pub fn begin_tagged_union(
+        &mut self,
+        union_name: &'static str,
+        kinds_amount: usize,
+    ) -> CUnionEmitter {
+        self.code.push_str("typedef union {\n");
+
+        let kind_field = gen_bit_field_min_size("kind", kinds_amount);
+        self.code.push_str(&kind_field);
+
+        CUnionEmitter {
+            emitter: self,
+            union_name,
+            kind_field,
+        }
+    }
+
     pub fn emit_system_include(&mut self, header_file_name: &str) {
         self.code.push_str("#include <");
         self.code.push_str(header_file_name);
@@ -73,10 +90,58 @@ pub fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
     }
 }
 
+pub fn min_int_type_required_for_bits_amount(bits_amount: usize) -> &'static str {
+    if bits_amount <= 8 {
+        "uint8_t"
+    } else if bits_amount <= 16 {
+        "uint16_t"
+    } else if bits_amount <= 32 {
+        "uint32_t"
+    } else if bits_amount <= 64 {
+        "uint64_t"
+    } else {
+        unreachable!()
+    }
+}
+
 pub fn gen_bit_field_min_size(field_name: &str, values_amount: usize) -> String {
     let int_type = min_int_type_required_for_field(values_amount);
     let bits_required = min_bits_required_for_field(values_amount);
     format!("{int_type} {field_name}: {bits_required};\n")
+}
+
+pub struct CUnionEmitter<'a> {
+    emitter: &'a mut CEmitter,
+    union_name: &'static str,
+    kind_field: String,
+}
+impl<'a> CUnionEmitter<'a> {
+    pub fn begin_struct_variant(&mut self, variant_name: &'static str) -> CStructEmitter {
+        self.emitter.code.push_str("struct {\n");
+        self.emitter.code.push_str(&self.kind_field);
+        CStructEmitter {
+            emitter: self.emitter,
+            struct_name: variant_name,
+        }
+    }
+
+    pub fn emit(self) {
+        self.emitter.code.push('}');
+        self.emitter.code.push_str(self.union_name);
+        self.emitter.code.push_str(";\n");
+    }
+}
+
+pub struct CUnionStructVariantEmitter<'a> {
+    emitter: &'a mut CEmitter,
+    variant_name: &'static str,
+}
+impl<'a> CUnionStructVariantEmitter<'a> {
+    pub fn emit(self) {
+        self.emitter.code.push('}');
+        self.emitter.code.push_str(self.variant_name);
+        self.emitter.code.push_str(";\n");
+    }
 }
 
 pub struct CStructEmitter<'a> {
@@ -101,11 +166,15 @@ impl<'a> CStructEmitter<'a> {
         self
     }
     pub fn bit_field_min_size(self, field_name: &str, values_amount: usize) -> Self {
-        self.bit_field(
-            field_name,
-            min_int_type_required_for_field(values_amount),
-            min_bits_required_for_field(values_amount),
-        )
+        if values_amount > 1 {
+            self.bit_field(
+                field_name,
+                min_int_type_required_for_field(values_amount),
+                min_bits_required_for_field(values_amount),
+            )
+        } else {
+            self
+        }
     }
     pub fn emit(self) {
         self.emitter.code.push('}');

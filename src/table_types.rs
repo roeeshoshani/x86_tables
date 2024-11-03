@@ -66,9 +66,14 @@ pub struct ImmOpInfo {
     pub extend_kind: ImmExtendKind,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+pub enum SpecificImm {
+    One,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecificImmOpInfo {
-    pub value: u8,
+    pub value: SpecificImm,
     pub operand_size: OpSizeInfo,
 }
 
@@ -77,7 +82,7 @@ pub struct MemOffsetOpInfo {
     pub mem_operand_size: OpSizeInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
 pub enum RegEncoding {
     Modrm,
     Opcode,
@@ -89,15 +94,22 @@ pub struct RegOpInfo {
     pub size: OpSizeInfo,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
+pub enum SpecificReg {
+    Rax,
+    Rdx,
+    Rcx,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecificRegOpInfo {
-    pub reg_64_bit_name: &'static str,
+    pub reg: SpecificReg,
     pub size: OpSizeInfo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ZextSpecificRegOpInfo {
-    pub reg_64_bit_name: &'static str,
+    pub reg: SpecificReg,
     pub size: OpSizeInfo,
     pub extended_size: OpSizeInfo,
 }
@@ -164,19 +176,19 @@ impl OpInfo {
     });
     pub const AL: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_ALWAYS_8,
-        reg_64_bit_name: "rax",
+        reg: SpecificReg::Rax,
     });
     pub const AX_16_32_64_DEF_32: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
-        reg_64_bit_name: "rax",
+        reg: SpecificReg::Rax,
     });
     pub const DX_16_32_64_DEF_32: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_16_32_64_DEF_32,
-        reg_64_bit_name: "rdx",
+        reg: SpecificReg::Rdx,
     });
     pub const CL: Self = Self::SpecificReg(SpecificRegOpInfo {
         size: OpSizeInfo::SZ_ALWAYS_8,
-        reg_64_bit_name: "rcx",
+        reg: SpecificReg::Rcx,
     });
 
     /// an 8-bit immediate which should not be sign/zero extended.
