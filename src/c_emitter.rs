@@ -13,6 +13,10 @@ impl CEmitter {
         &self.code
     }
 
+    pub fn emit_raw(&mut self, code: &str) {
+        self.code.push_str(code)
+    }
+
     pub fn emit_system_include(&mut self, header_file_name: &str) {
         self.code.push_str("#include <");
         self.code.push_str(header_file_name);
@@ -67,6 +71,12 @@ pub fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
     } else {
         "uint64_t"
     }
+}
+
+pub fn gen_bit_field_min_size(field_name: &str, values_amount: usize) -> String {
+    let int_type = min_int_type_required_for_field(values_amount);
+    let bits_required = min_bits_required_for_field(values_amount);
+    format!("{int_type} {field_name}: {bits_required};\n")
 }
 
 pub struct CStructEmitter<'a> {

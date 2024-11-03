@@ -53,7 +53,7 @@ impl OpSizeInfo {
     };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumVariantNames)]
 pub enum ImmExtendKind {
     SignExtend,
     ZeroExtend,
@@ -68,7 +68,7 @@ pub struct ImmOpInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecificImmOpInfo {
-    pub value: u64,
+    pub value: u8,
     pub operand_size: OpSizeInfo,
 }
 
