@@ -1,4 +1,4 @@
-use delve::{EnumDisplay, EnumFields, EnumToStr, EnumVariantNames};
+use delve::{EnumDisplay, EnumToStr, EnumVariantNames};
 
 pub type Mnemonic = &'static str;
 

@@ -50,10 +50,16 @@ impl CEmitter {
         }
     }
 
-    pub fn system_include(&mut self, header_file_name: &str) {
+    pub fn include_system(&mut self, header_file_name: &str) {
         self.code.push_str("#include <");
         self.code.push_str(header_file_name);
         self.code.push_str(">\n");
+    }
+
+    pub fn include(&mut self, header_file_name: &str) {
+        self.code.push_str("#include \"");
+        self.code.push_str(header_file_name);
+        self.code.push_str("\"\n");
     }
 
     pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
@@ -95,20 +101,6 @@ pub fn min_int_type_required_for_field(values_amount: usize) -> &'static str {
         "uint32_t"
     } else {
         "uint64_t"
-    }
-}
-
-pub fn min_int_type_required_for_bits_amount(bits_amount: usize) -> &'static str {
-    if bits_amount <= 8 {
-        "uint8_t"
-    } else if bits_amount <= 16 {
-        "uint16_t"
-    } else if bits_amount <= 32 {
-        "uint32_t"
-    } else if bits_amount <= 64 {
-        "uint64_t"
-    } else {
-        unreachable!()
     }
 }
 

@@ -110,11 +110,17 @@ fn find_first_op_index(ops_info: Ops, uniq_ops_infos: &[Ops]) -> usize {
         .sum()
 }
 
-fn main() {
-    let mut emitter = CEmitter::new();
-    let first_opcode_byte_table = gen_first_opcode_byte_table();
+struct GeneratedCode {
+    types_file: CEmitter,
+    tables_file: CEmitter,
+}
+fn generate_code() -> GeneratedCode {
+    let mut types_file = CEmitter::new();
+    let mut tables_file = CEmitter::new();
 
-    emitter.system_include("stdint.h");
+    types_file.include_system("stdint.h");
+
+    let first_opcode_byte_table = gen_first_opcode_byte_table();
 
     let mut uniq_mnemonics = iter_collect_unique(table_all_mnemonics(&first_opcode_byte_table));
     // a psuedo mnemonic used to represent the fact that this instruction required further identification using the reg field
@@ -153,14 +159,14 @@ fn main() {
         table_all_modrm_reg_opcode_ext_tables(&first_opcode_byte_table).cloned(),
     );
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "mnemonic_t",
         uniq_mnemonics
             .iter()
             .map(|x| mnemonic_to_c_variant_name(*x)),
     );
 
-    let mut insn_info_union = emitter.begin_union("insn_info_t");
+    let mut insn_info_union = types_file.begin_union("insn_info_t");
     insn_info_union.bit_field("mnemonic", uniq_mnemonics.len());
     insn_info_union
         .begin_embedded_struct("regular")
@@ -184,14 +190,14 @@ fn main() {
         .emit();
     insn_info_union.emit();
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "op_size_t",
         OpSize::VARIANT_NAMES
             .iter()
             .map(|x| format!("OP_SIZE_{}", x.strip_prefix("S").unwrap())),
     );
 
-    emitter
+    types_file
         .begin_struct("op_size_info_t")
         .bit_field("with_operand_size_override", OpSize::VARIANT_NAMES.len())
         .bit_field("mode_32", OpSize::VARIANT_NAMES.len())
@@ -199,42 +205,42 @@ fn main() {
         .bit_field("mode_64_with_rex_w", OpSize::VARIANT_NAMES.len())
         .emit();
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "op_kind_t",
         OpInfo::VARIANT_NAMES
             .into_iter()
             .map(|x| op_kind_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "imm_ext_kind_t",
         ImmExtendKind::VARIANT_NAMES
             .into_iter()
             .map(|x| imm_ext_kind_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "reg_encoding_t",
         RegEncoding::VARIANT_NAMES
             .into_iter()
             .map(|x| reg_encoding_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "specific_reg_t",
         SpecificReg::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_reg_to_c_variant_name(x)),
     );
 
-    emitter.emit_enum(
+    types_file.emit_enum(
         "specific_imm_t",
         SpecificImm::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_imm_to_c_variant_name(x)),
     );
 
-    let mut op_info_union = emitter.begin_tagged_union("op_info_t", OpInfo::VARIANT_NAMES.len());
+    let mut op_info_union = types_file.begin_tagged_union("op_info_t", OpInfo::VARIANT_NAMES.len());
     op_info_union
         .begin_struct_variant("imm")
         .bit_field("encoded_size_info_index", uniq_op_size_infos.len())
@@ -281,7 +287,7 @@ fn main() {
     op_info_union.begin_struct_variant("cond").emit();
     op_info_union.emit();
 
-    let mut op_size_info_table = emitter.begin_table("op_size_info_t", "op_size_infos_table");
+    let mut op_size_info_table = tables_file.begin_table("op_size_info_t", "op_size_infos_table");
     for op_size_info in &uniq_op_size_infos {
         op_size_info_table
             .begin_entry()
@@ -299,7 +305,7 @@ fn main() {
     }
     op_size_info_table.emit();
 
-    let mut op_info_table = emitter.begin_table("op_info_t", "op_infos_table");
+    let mut op_info_table = tables_file.begin_table("op_info_t", "op_infos_table");
     for op_info in &uniq_op_infos {
         let mut entry = op_info_table.begin_entry();
 
@@ -409,7 +415,7 @@ fn main() {
     }
     op_info_table.emit();
 
-    let mut laid_out_ops_infos_table = emitter.begin_table(
+    let mut laid_out_ops_infos_table = tables_file.begin_table(
         &min_int_type_required_for_field(uniq_op_infos.len()),
         "laid_out_ops_infos_table",
     );
@@ -420,7 +426,8 @@ fn main() {
     }
     laid_out_ops_infos_table.emit();
 
-    let mut first_opcde_byte_table = emitter.begin_table("insn_info_t", "first_opcode_byte_table");
+    let mut first_opcde_byte_table =
+        tables_file.begin_table("insn_info_t", "first_opcode_byte_table");
     for insn_info in &first_opcode_byte_table {
         let mut entry = first_opcde_byte_table.begin_entry();
         match insn_info {
@@ -448,6 +455,10 @@ fn main() {
         entry.emit();
     }
     first_opcde_byte_table.emit();
-
-    println!("{}", emitter.code());
+    GeneratedCode {
+        types_file,
+        tables_file,
+    }
 }
+
+fn main() {}
