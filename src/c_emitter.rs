@@ -22,6 +22,7 @@ impl CEmitter {
         self.code.push_str(define_name);
         self.code.push(' ');
         self.code.push_str(define_value);
+        self.code.push('\n');
     }
 
     pub fn begin_tagged_union(
