@@ -34,8 +34,13 @@ impl CEmitter {
         }
     }
 
-    pub fn begin_union(&mut self, union_name: &'static str) -> CStructEmitter {
-        self.code.push_str("typedef union {\n");
+    pub fn begin_union(&mut self, union_name: &'static str, packed: bool) -> CStructEmitter {
+        if packed {
+            self.code
+                .push_str("typedef union __attribute__((packed)) {\n");
+        } else {
+            self.code.push_str("typedef union {\n");
+        }
         CStructEmitter {
             emitter: self,
             struct_name: union_name,
@@ -63,8 +68,13 @@ impl CEmitter {
         self.code.push_str(";\n");
     }
 
-    pub fn begin_struct(&mut self, struct_name: &'static str) -> CStructEmitter {
-        self.code.push_str("typedef struct {");
+    pub fn begin_struct(&mut self, struct_name: &'static str, packed: bool) -> CStructEmitter {
+        if packed {
+            self.code
+                .push_str("typedef struct __attribute__((packed)) {");
+        } else {
+            self.code.push_str("typedef struct {");
+        }
         CStructEmitter {
             emitter: self,
             struct_name,
@@ -124,8 +134,18 @@ pub struct CTaggedUnionEmitter<'a> {
     kind_field: String,
 }
 impl<'a> CTaggedUnionEmitter<'a> {
-    pub fn begin_struct_variant(&mut self, variant_name: &'static str) -> CStructEmitter {
-        self.emitter.code.push_str("struct {\n");
+    pub fn begin_struct_variant(
+        &mut self,
+        variant_name: &'static str,
+        packed: bool,
+    ) -> CStructEmitter {
+        if packed {
+            self.emitter
+                .code
+                .push_str("struct __attribute__((packed)) {\n");
+        } else {
+            self.emitter.code.push_str("struct {\n");
+        }
         self.emitter.code.push_str(&self.kind_field);
         CStructEmitter {
             emitter: self.emitter,
@@ -157,8 +177,18 @@ pub struct CStructEmitter<'a> {
     struct_name: &'static str,
 }
 impl<'a> CStructEmitter<'a> {
-    pub fn begin_embedded_struct(&mut self, field_name: &'static str) -> CStructEmitter {
-        self.emitter.code.push_str("struct {\n");
+    pub fn begin_embedded_struct(
+        &mut self,
+        field_name: &'static str,
+        packed: bool,
+    ) -> CStructEmitter {
+        if packed {
+            self.emitter
+                .code
+                .push_str("struct __attribute__((packed)) {\n");
+        } else {
+            self.emitter.code.push_str("struct {\n");
+        }
         CStructEmitter {
             emitter: self.emitter,
             struct_name: field_name,
