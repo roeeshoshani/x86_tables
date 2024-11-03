@@ -13,6 +13,12 @@ impl CEmitter {
         &self.code
     }
 
+    pub fn emit_system_include(&mut self, header_file_name: &str) {
+        self.code.push_str("#include <");
+        self.code.push_str(header_file_name);
+        self.code.push_str(">\n");
+    }
+
     pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
     where
         S: AsRef<str>,
@@ -34,6 +40,15 @@ impl CEmitter {
             emitter: self,
             struct_name,
         }
+    }
+
+    pub fn begin_table(&mut self, struct_name: &str, table_name: &str) -> CTableEmitter {
+        self.code.push_str("const ");
+        self.code.push_str(struct_name);
+        self.code.push(' ');
+        self.code.push_str(table_name);
+        self.code.push_str("[] = {");
+        CTableEmitter { emitter: self }
     }
 }
 
@@ -86,5 +101,37 @@ impl<'a> CStructEmitter<'a> {
         self.emitter.code.push('}');
         self.emitter.code.push_str(self.struct_name);
         self.emitter.code.push(';');
+    }
+}
+
+pub struct CTableEmitter<'a> {
+    emitter: &'a mut CEmitter,
+}
+impl<'a> CTableEmitter<'a> {
+    pub fn begin_entry(&mut self) -> CTableEntryEmitter {
+        self.emitter.code.push('{');
+        CTableEntryEmitter {
+            emitter: self.emitter,
+        }
+    }
+    pub fn emit(self) {
+        self.emitter.code.push_str("};");
+    }
+}
+
+pub struct CTableEntryEmitter<'a> {
+    emitter: &'a mut CEmitter,
+}
+impl<'a> CTableEntryEmitter<'a> {
+    pub fn field(self, field_name: &str, value: &str) -> Self {
+        self.emitter.code.push('.');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push('=');
+        self.emitter.code.push_str(value);
+        self.emitter.code.push(',');
+        self
+    }
+    pub fn emit(self) {
+        self.emitter.code.push_str("},");
     }
 }
