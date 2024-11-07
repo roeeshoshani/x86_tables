@@ -1,4 +1,4 @@
-use std::{cmp::max, collections::HashSet, hash::Hash, path::PathBuf};
+use std::{cmp::max, path::PathBuf};
 
 use c_emitter::{min_int_type_required_for_field, CEmitter};
 use clap::Parser;
@@ -91,9 +91,28 @@ fn op_size_to_c_variant_name(op_size: OpSize) -> String {
     format!("OP_SIZE_{}", op_size as u32)
 }
 
-fn iter_collect_unique<T: Eq + Hash, I: Iterator<Item = T>>(iter: I) -> Vec<T> {
-    let set: HashSet<T> = iter.collect();
-    set.into_iter().collect()
+fn vec_dedup<T: Eq>(vec: &mut Vec<T>) {
+    let mut i = 0;
+    while i < vec.len() {
+        // find and remove duplicates
+        let mut j = i + 1;
+        while j < vec.len() {
+            if vec[i] == vec[j] {
+                // found duplicate, remove it
+                vec.swap_remove(j);
+            } else {
+                j += 1;
+            }
+        }
+
+        i += 1;
+    }
+}
+
+fn iter_collect_unique<T: Eq, I: Iterator<Item = T>>(iter: I) -> Vec<T> {
+    let mut result: Vec<T> = iter.collect();
+    vec_dedup(&mut result);
+    result
 }
 
 fn find_index<'a, T: Eq + 'a, C>(item: &T, collection: C) -> usize
