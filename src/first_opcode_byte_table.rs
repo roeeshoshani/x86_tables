@@ -18,38 +18,51 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
     let mut table = Vec::new();
 
     // 0x00 - 0x05
+    assert_eq!(table.len(), 0x00);
     simple_binary_op(&mut table, "add");
     // 0x06 - 0x07
+    assert_eq!(table.len(), 0x06);
     unsupported(&mut table, 2);
     // 0x08 - 0x0d
+    assert_eq!(table.len(), 0x08);
     simple_binary_op(&mut table, "or");
     // 0x0e - 0x0f
     unsupported(&mut table, 2);
     // 0x10 - 0x15
+    assert_eq!(table.len(), 0x10);
     simple_binary_op(&mut table, "adc");
     // 0x16 - 0x17
+    assert_eq!(table.len(), 0x16);
     unsupported(&mut table, 2);
     // 0x18 - 0x1d
+    assert_eq!(table.len(), 0x18);
     simple_binary_op(&mut table, "sbb");
     // 0x1e - 0x1f
     unsupported(&mut table, 2);
     // 0x20 - 0x25
+    assert_eq!(table.len(), 0x20);
     simple_binary_op(&mut table, "and");
     // 0x26 - 0x27
+    assert_eq!(table.len(), 0x26);
     unsupported(&mut table, 2);
     // 0x28 - 0x2d
+    assert_eq!(table.len(), 0x28);
     simple_binary_op(&mut table, "sub");
     // 0x2e - 0x2f
     unsupported(&mut table, 2);
     // 0x30 - 0x35
+    assert_eq!(table.len(), 0x30);
     simple_binary_op(&mut table, "xor");
-    // 0x26 - 0x27
+    // 0x36 - 0x37
+    assert_eq!(table.len(), 0x36);
     unsupported(&mut table, 2);
     // 0x38 - 0x3d
+    assert_eq!(table.len(), 0x38);
     simple_binary_op(&mut table, "cmp");
     // 0x3e - 0x3f
     unsupported(&mut table, 2);
     // 0x40 - 0x47
+    assert_eq!(table.len(), 0x40);
     repeat(
         &mut table,
         8,
@@ -59,6 +72,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         }),
     );
     // 0x48 - 0x4f
+    assert_eq!(table.len(), 0x48);
     repeat(
         &mut table,
         8,
@@ -68,6 +82,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         }),
     );
     // 0x50 - 0x57
+    assert_eq!(table.len(), 0x50);
     repeat(
         &mut table,
         8,
@@ -77,6 +92,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         }),
     );
     // 0x58 - 0x5f
+    assert_eq!(table.len(), 0x58);
     repeat(
         &mut table,
         8,
@@ -86,8 +102,10 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         }),
     );
     // 0x60 - 0x67
+    assert_eq!(table.len(), 0x60);
     unsupported(&mut table, 8);
     // 0x68
+    assert_eq!(table.len(), 0x68);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "push",
         ops: &[OpInfo::Imm(ImmOpInfo {
@@ -97,6 +115,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         })],
     }));
     // 0x69
+    assert_eq!(table.len(), 0x69);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "imul",
         ops: &[
@@ -134,6 +153,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
     // 0x6c - 0x6f
     unsupported(&mut table, 4);
     // 0x70 - 0x7f
+    assert_eq!(table.len(), 0x70);
     repeat(
         &mut table,
         16,
@@ -143,6 +163,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         }),
     );
     // 0x80
+    assert_eq!(table.len(), 0x80);
     table.push(InsnInfo::ModrmRegOpcodeExt(
         ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
             &[OpInfo::RM_8, OpInfo::IMM_8_NO_EXT],
@@ -150,6 +171,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ),
     ));
     // 0x81
+    assert_eq!(table.len(), 0x81);
     table.push(InsnInfo::ModrmRegOpcodeExt(
         ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
             &[
@@ -164,8 +186,10 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ),
     ));
     // 0x82
+    assert_eq!(table.len(), 0x82);
     unsupported(&mut table, 1);
     // 0x83
+    assert_eq!(table.len(), 0x83);
     table.push(InsnInfo::ModrmRegOpcodeExt(
         ModrmRegOpcodeExtInsnInfo::new_with_same_operands(
             &[
@@ -180,31 +204,37 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ),
     ));
     // 0x84
+    assert_eq!(table.len(), 0x84);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "test",
         ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
     }));
     // 0x85
+    assert_eq!(table.len(), 0x85);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "test",
         ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
     }));
     // 0x86
+    assert_eq!(table.len(), 0x86);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "xchg",
         ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
     }));
     // 0x87
+    assert_eq!(table.len(), 0x87);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "xchg",
         ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
     }));
     // 0x88
+    assert_eq!(table.len(), 0x88);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "mov",
         ops: &[OpInfo::RM_8, OpInfo::R_MODRM_8],
     }));
     // 0x89
+    assert_eq!(table.len(), 0x89);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "mov",
         ops: &[OpInfo::RM_16_32_64_DEF_32, OpInfo::R_MODRM_16_32_64_DEF_32],
@@ -245,20 +275,23 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ],
     }));
     // 0x90
+    assert_eq!(table.len(), 0x90);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "nop",
         ops: &[],
     }));
     // 0x91 - 0x97
+    assert_eq!(table.len(), 0x91);
     repeat(
         &mut table,
-        8,
+        7,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "xchg",
             ops: &[OpInfo::AX_16_32_64_DEF_32, OpInfo::R_OPCODE_16_32_64_DEF_32],
         }),
     );
-    //0x98
+    // 0x98
+    assert_eq!(table.len(), 0x98);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "movsz", // this is actually cbw, but this makes life simpler when lifting it
         ops: &[
@@ -275,6 +308,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ],
     }));
     // 0x99
+    assert_eq!(table.len(), 0x99);
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "cwd", // this is cwd/cdq/cqo
         ops: &[OpInfo::DX_16_32_64_DEF_32, OpInfo::AX_16_32_64_DEF_32],
