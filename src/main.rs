@@ -479,7 +479,7 @@ fn main() {
     )
     .unwrap();
     std::fs::write(
-        cli.output_dir.join("tables.c"),
+        cli.output_dir.join("tables.h"),
         generated_code.tables_file.code(),
     )
     .unwrap();
