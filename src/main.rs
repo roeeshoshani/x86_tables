@@ -132,6 +132,43 @@ fn find_first_op_index(ops_info: Ops, uniq_ops_infos: &[Ops]) -> usize {
         .sum()
 }
 
+fn emit_opcode_byte_table(
+    tables_file: &mut CEmitter,
+    opcode_byte_table: &[InsnInfo],
+    table_name: &str,
+    uniq_ops_infos: &[Ops],
+    uniq_modrm_reg_opcode_ext_tables: &[ModrmRegOpcodeExtInsnInfo],
+) {
+    let mut table_emitter = tables_file.begin_table("insn_info_t", table_name);
+    for insn_info in opcode_byte_table {
+        let mut entry = table_emitter.begin_entry();
+        match insn_info {
+            InsnInfo::Regular(info) => entry
+                .begin_struct_field("regular")
+                .field("mnemonic", &mnemonic_to_c_variant_name(info.mnemonic))
+                .field_int(
+                    "first_op_index",
+                    find_first_op_index(info.ops, uniq_ops_infos),
+                )
+                .field_int("ops_amount", info.ops.len())
+                .emit(),
+            InsnInfo::ModrmRegOpcodeExt(modrm_reg_table) => entry
+                .begin_struct_field("modrm_reg_opcode_ext")
+                .field(
+                    "mnemonic",
+                    &mnemonic_to_c_variant_name(MNEMONIC_MODRM_REG_OPCODE_EXT),
+                )
+                .field_int(
+                    "modrm_reg_table_index",
+                    find_index(modrm_reg_table, uniq_modrm_reg_opcode_ext_tables),
+                )
+                .emit(),
+        }
+        entry.emit();
+    }
+    table_emitter.emit();
+}
+
 struct GeneratedCode {
     types_file: CEmitter,
     tables_file: CEmitter,
@@ -457,35 +494,20 @@ fn generate_code() -> GeneratedCode {
     }
     laid_out_ops_infos_table.emit();
 
-    let mut first_opcde_byte_table =
-        tables_file.begin_table("insn_info_t", "first_opcode_byte_table");
-    for insn_info in &first_opcode_byte_table {
-        let mut entry = first_opcde_byte_table.begin_entry();
-        match insn_info {
-            InsnInfo::Regular(info) => entry
-                .begin_struct_field("regular")
-                .field("mnemonic", &mnemonic_to_c_variant_name(info.mnemonic))
-                .field_int(
-                    "first_op_index",
-                    find_first_op_index(info.ops, &uniq_ops_infos),
-                )
-                .field_int("ops_amount", info.ops.len())
-                .emit(),
-            InsnInfo::ModrmRegOpcodeExt(modrm_reg_table) => entry
-                .begin_struct_field("modrm_reg_opcode_ext")
-                .field(
-                    "mnemonic",
-                    &mnemonic_to_c_variant_name(MNEMONIC_MODRM_REG_OPCODE_EXT),
-                )
-                .field_int(
-                    "modrm_reg_table_index",
-                    find_index(modrm_reg_table, &uniq_modrm_reg_opcode_ext_tables),
-                )
-                .emit(),
-        }
-        entry.emit();
-    }
-    first_opcde_byte_table.emit();
+    emit_opcode_byte_table(
+        &mut tables_file,
+        &first_opcode_byte_table,
+        "first_opcode_byte_table",
+        &uniq_ops_infos,
+        &uniq_modrm_reg_opcode_ext_tables,
+    );
+    emit_opcode_byte_table(
+        &mut tables_file,
+        &second_opcode_byte_table,
+        "second_opcode_byte_table",
+        &uniq_ops_infos,
+        &uniq_modrm_reg_opcode_ext_tables,
+    );
     GeneratedCode {
         types_file,
         tables_file,
