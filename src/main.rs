@@ -10,6 +10,7 @@ use to_snake_case::ToSnakeCase;
 
 mod c_emitter;
 mod first_opcode_byte_table;
+mod second_opcode_byte_table;
 mod table_gen_utils;
 mod table_types;
 
