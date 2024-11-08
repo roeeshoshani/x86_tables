@@ -1,6 +1,6 @@
 use std::{cmp::max, path::PathBuf};
 
-use c_emitter::{min_int_type_required_for_field, CEmitter};
+use c_emitter::{min_int_type_required_for_field, CEmitter, CStructValueEmitter};
 use clap::Parser;
 use delve::VariantNames;
 use either::Either;
@@ -132,6 +132,21 @@ fn find_first_op_index(ops_info: Ops, uniq_ops_infos: &[Ops]) -> usize {
         .sum()
 }
 
+fn emit_regular_insn_info(
+    emitter: CStructValueEmitter,
+    info: &RegularInsnInfo,
+    uniq_ops_infos: &[Ops],
+) {
+    emitter
+        .field("mnemonic", &mnemonic_to_c_variant_name(info.mnemonic))
+        .field_int(
+            "first_op_index",
+            find_first_op_index(info.ops, uniq_ops_infos),
+        )
+        .field_int("ops_amount", info.ops.len())
+        .emit()
+}
+
 fn emit_opcode_byte_table(
     tables_file: &mut CEmitter,
     opcode_byte_table: &[InsnInfo],
@@ -143,15 +158,9 @@ fn emit_opcode_byte_table(
     for insn_info in opcode_byte_table {
         let mut entry = table_emitter.begin_entry();
         match insn_info {
-            InsnInfo::Regular(info) => entry
-                .begin_struct_field("regular")
-                .field("mnemonic", &mnemonic_to_c_variant_name(info.mnemonic))
-                .field_int(
-                    "first_op_index",
-                    find_first_op_index(info.ops, uniq_ops_infos),
-                )
-                .field_int("ops_amount", info.ops.len())
-                .emit(),
+            InsnInfo::Regular(info) => {
+                emit_regular_insn_info(entry.begin_struct_field("regular"), info, uniq_ops_infos)
+            }
             InsnInfo::ModrmRegOpcodeExt(modrm_reg_table) => entry
                 .begin_struct_field("modrm_reg_opcode_ext")
                 .field(
@@ -234,10 +243,8 @@ fn generate_code() -> GeneratedCode {
             .map(|x| mnemonic_to_c_variant_name(*x)),
     );
 
-    let mut insn_info_union = types_file.begin_union("insn_info_t");
-    insn_info_union.bit_field("mnemonic", uniq_mnemonics.len());
-    insn_info_union
-        .begin_embedded_struct("regular")
+    types_file
+        .begin_struct("regular_insn_info_t")
         .bit_field("mnemonic", uniq_mnemonics.len())
         .bit_field(
             "first_op_index",
@@ -248,6 +255,10 @@ fn generate_code() -> GeneratedCode {
         )
         .bit_field("ops_amount", insn_max_ops + 1)
         .emit();
+
+    let mut insn_info_union = types_file.begin_union("insn_info_t");
+    insn_info_union.bit_field("mnemonic", uniq_mnemonics.len());
+    insn_info_union.field("regular_insn_info_t", "regular");
     insn_info_union
         .begin_embedded_struct("modrm_reg_opcode_ext")
         .bit_field("mnemonic", uniq_mnemonics.len())
@@ -354,6 +365,11 @@ fn generate_code() -> GeneratedCode {
         .emit();
     op_info_union.begin_struct_variant("cond").emit();
     op_info_union.emit();
+
+    types_file
+        .begin_struct("modrm_reg_opcode_ext_table_t")
+        .array_field("regular_insn_info_t", "by_reg_value", 8)
+        .emit();
 
     let mut op_size_info_table = tables_file.begin_table("op_size_info_t", "op_size_infos_table");
     for op_size_info in &uniq_op_size_infos {
@@ -493,6 +509,25 @@ fn generate_code() -> GeneratedCode {
         }
     }
     laid_out_ops_infos_table.emit();
+
+    let mut modrm_reg_opcode_ext_tables = tables_file.begin_table(
+        "modrm_reg_opcode_ext_table_t",
+        "modrm_reg_opcode_ext_tables",
+    );
+    for inner_table in &uniq_modrm_reg_opcode_ext_tables {
+        let mut entry = modrm_reg_opcode_ext_tables.begin_entry();
+        let mut by_reg_value_array = entry.begin_array_field("by_reg_value");
+        for reg_value_entry in &inner_table.by_reg_value {
+            emit_regular_insn_info(
+                by_reg_value_array.begin_struct_element(),
+                reg_value_entry,
+                &uniq_ops_infos,
+            );
+        }
+        by_reg_value_array.emit();
+        entry.emit();
+    }
+    modrm_reg_opcode_ext_tables.emit();
 
     emit_opcode_byte_table(
         &mut tables_file,

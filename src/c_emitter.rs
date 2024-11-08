@@ -155,14 +155,22 @@ impl<'a> CUnionEmitter<'a> {
         }
     }
 
-    pub fn bit_field(&mut self, field_name: &'static str, values_amount: usize) -> &mut Self {
+    pub fn field(&mut self, field_type: &str, field_name: &str) -> &mut Self {
+        self.emitter.code.push_str(field_type);
+        self.emitter.code.push(' ');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push(';');
+        self
+    }
+
+    pub fn bit_field(&mut self, field_name: &str, values_amount: usize) -> &mut Self {
         self.emitter
             .code
             .push_str(&gen_bit_field_min_size(field_name, values_amount));
         self
     }
 
-    pub fn emit(self) {
+    pub fn emit(&mut self) {
         self.emitter.code.push('}');
         self.emitter.code.push_str(self.union_name);
         self.emitter.code.push_str(";\n");
@@ -174,10 +182,24 @@ pub struct CStructEmitter<'a> {
     struct_name: &'static str,
 }
 impl<'a> CStructEmitter<'a> {
-    pub fn bit_field(&mut self, field_name: &'static str, values_amount: usize) -> &mut Self {
+    pub fn bit_field(&mut self, field_name: &str, values_amount: usize) -> &mut Self {
         self.emitter
             .code
             .push_str(&gen_bit_field_min_size(field_name, values_amount));
+        self
+    }
+    pub fn array_field(
+        &mut self,
+        field_type: &str,
+        field_name: &str,
+        array_size: usize,
+    ) -> &mut Self {
+        self.emitter.code.push_str(field_type);
+        self.emitter.code.push(' ');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push('[');
+        self.emitter.code.push_str(&array_size.to_string());
+        self.emitter.code.push_str("];");
         self
     }
     pub fn emit(&mut self) {
@@ -230,6 +252,30 @@ impl<'a> CStructValueEmitter<'a> {
         self.emitter.code.push('.');
         self.emitter.code.push_str(field_name);
         self.emitter.code.push_str("={");
+        CStructValueEmitter {
+            emitter: self.emitter,
+        }
+    }
+    pub fn begin_array_field(&mut self, field_name: &str) -> CArrayValueEmitter {
+        self.emitter.code.push('.');
+        self.emitter.code.push_str(field_name);
+        self.emitter.code.push_str("={");
+        CArrayValueEmitter {
+            emitter: self.emitter,
+        }
+    }
+    pub fn emit(self) {
+        self.emitter.code.push_str("},\n");
+    }
+}
+
+pub struct CArrayValueEmitter<'a> {
+    emitter: &'a mut CEmitter,
+}
+impl<'a> CArrayValueEmitter<'a> {
+    pub fn begin_struct_element(&mut self) -> CStructValueEmitter {
+        self.emitter.code.push('{');
+
         CStructValueEmitter {
             emitter: self.emitter,
         }
