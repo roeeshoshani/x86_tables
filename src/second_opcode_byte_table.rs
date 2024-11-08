@@ -3,9 +3,34 @@ use crate::{table_gen_utils::*, table_types::*};
 pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
     let mut table = Vec::new();
 
-    // 0x00 - 0x1e
+    // 0x00 - 0x1d
     assert_eq!(table.len(), 0x00);
-    unsupported(&mut table, 0x1f);
+    unsupported(&mut table, 0x1e);
+    // 0x1e
+    assert_eq!(table.len(), 0x1e);
+    table.push(InsnInfo::ModrmRegOpcodeExt(ModrmRegOpcodeExtInsnInfo {
+        by_reg_value: [
+            // 0
+            RegularInsnInfo::UNSUPPORTED,
+            // 1
+            RegularInsnInfo::UNSUPPORTED,
+            // 2
+            RegularInsnInfo::UNSUPPORTED,
+            // 3
+            RegularInsnInfo::UNSUPPORTED,
+            // 4
+            RegularInsnInfo::UNSUPPORTED,
+            // 5
+            RegularInsnInfo::UNSUPPORTED,
+            // 6
+            RegularInsnInfo::UNSUPPORTED,
+            // 7
+            RegularInsnInfo {
+                mnemonic: "endbr",
+                ops: &[],
+            },
+        ],
+    }));
     // 0x1f
     assert_eq!(table.len(), 0x1f);
     table.push(InsnInfo::Regular(RegularInsnInfo {
