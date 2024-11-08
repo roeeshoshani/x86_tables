@@ -238,6 +238,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "mnemonic_t",
+        "MNEMONIC_",
         uniq_mnemonics
             .iter()
             .map(|x| mnemonic_to_c_variant_name(*x)),
@@ -271,6 +272,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "op_size_t",
+        "OP_SIZE_",
         OpSize::VARIANT_NAMES
             .iter()
             .map(|x| format!("OP_SIZE_{}", x.strip_prefix("S").unwrap())),
@@ -286,6 +288,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "op_kind_t",
+        "OP_KIND_",
         OpInfo::VARIANT_NAMES
             .into_iter()
             .map(|x| op_kind_to_c_variant_name(x)),
@@ -293,6 +296,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "imm_ext_kind_t",
+        "IMM_EXT_",
         ImmExtendKind::VARIANT_NAMES
             .into_iter()
             .map(|x| imm_ext_kind_to_c_variant_name(x)),
@@ -300,6 +304,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "reg_encoding_t",
+        "REG_ENC_",
         RegEncoding::VARIANT_NAMES
             .into_iter()
             .map(|x| reg_encoding_to_c_variant_name(x)),
@@ -307,6 +312,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "specific_reg_t",
+        "SPECIFIC_REG_",
         SpecificReg::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_reg_to_c_variant_name(x)),
@@ -314,6 +320,7 @@ fn generate_code() -> GeneratedCode {
 
     types_file.emit_enum(
         "specific_imm_t",
+        "SPECIFIC_IMM_",
         SpecificImm::VARIANT_NAMES
             .into_iter()
             .map(|x| specific_imm_to_c_variant_name(x)),

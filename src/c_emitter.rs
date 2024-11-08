@@ -68,14 +68,22 @@ impl CEmitter {
         self.code.push_str(">\n");
     }
 
-    pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, variants: I)
+    pub fn emit_enum<'a, S, I>(&mut self, enum_name: &str, enum_prefix: &str, variants: I)
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
     {
         self.code.push_str("typedef enum {");
+        let mut last_variant = None;
         for variant in variants {
             self.code.push_str(variant.as_ref());
+            self.code.push(',');
+            last_variant = Some(variant);
+        }
+        if let Some(last_variant) = last_variant {
+            self.code.push_str(enum_prefix);
+            self.code.push_str("MAX = ");
+            self.code.push_str(last_variant.as_ref());
             self.code.push(',');
         }
         self.code.push('}');
