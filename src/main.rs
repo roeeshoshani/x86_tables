@@ -5,6 +5,7 @@ use clap::Parser;
 use delve::VariantNames;
 use either::Either;
 use first_opcode_byte_table::gen_first_opcode_byte_table;
+use second_opcode_byte_table::gen_second_opcode_byte_table;
 use table_types::*;
 use to_snake_case::ToSnakeCase;
 
@@ -143,13 +144,20 @@ fn generate_code() -> GeneratedCode {
     types_file.include_system("stdint.h");
 
     let first_opcode_byte_table = gen_first_opcode_byte_table();
+    let second_opcode_byte_table = gen_second_opcode_byte_table();
 
-    let mut uniq_mnemonics = iter_collect_unique(table_all_mnemonics(&first_opcode_byte_table));
+    let combined_table = [
+        first_opcode_byte_table.as_slice(),
+        second_opcode_byte_table.as_slice(),
+    ]
+    .concat();
+
+    let mut uniq_mnemonics = iter_collect_unique(table_all_mnemonics(&combined_table));
     // a psuedo mnemonic used to represent the fact that this instruction required further identification using the reg field
     // of the modrm field.
     uniq_mnemonics.push(MNEMONIC_MODRM_REG_OPCODE_EXT);
 
-    let uniq_ops_infos = iter_collect_unique(table_all_ops(&first_opcode_byte_table));
+    let uniq_ops_infos = iter_collect_unique(table_all_ops(&combined_table));
     let laid_out_ops_infos = uniq_ops_infos.iter().map(|x| x.iter()).flatten();
     let laid_out_ops_infos_len = laid_out_ops_infos.clone().count();
     let insn_max_ops = uniq_ops_infos
@@ -179,9 +187,8 @@ fn generate_code() -> GeneratedCode {
             .flatten(),
     );
 
-    let uniq_modrm_reg_opcode_ext_tables = iter_collect_unique(
-        table_all_modrm_reg_opcode_ext_tables(&first_opcode_byte_table).cloned(),
-    );
+    let uniq_modrm_reg_opcode_ext_tables =
+        iter_collect_unique(table_all_modrm_reg_opcode_ext_tables(&combined_table).cloned());
 
     types_file.emit_enum(
         "mnemonic_t",

@@ -94,6 +94,9 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
             }),
         ],
     }));
+    // 0xa6 - 0xff
+    assert_eq!(table.len(), 0xa6);
+    unsupported(&mut table, 90);
 
     table
 }
