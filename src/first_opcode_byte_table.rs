@@ -105,9 +105,26 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
             ops: &[OpInfo::R_OPCODE_16_32_64_DEF_64],
         }),
     );
-    // 0x60 - 0x67
+    // 0x60 - 0x62
     assert_eq!(table.len(), 0x60);
-    unsupported(&mut table, 8);
+    unsupported(&mut table, 3);
+    // 0x63
+    assert_eq!(table.len(), 0x63);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movsxd",
+        ops: &[
+            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::Rm(OpSizeInfo {
+                with_operand_size_override: OpSize::S16,
+                mode_32: OpSize::S32,
+                mode_64: OpSize::S32,
+                mode_64_with_rex_w: OpSize::S32,
+            }),
+        ],
+    }));
+    // 0x64 - 0x67
+    assert_eq!(table.len(), 0x64);
+    unsupported(&mut table, 4);
     // 0x68
     assert_eq!(table.len(), 0x68);
     table.push(InsnInfo::Regular(RegularInsnInfo {
