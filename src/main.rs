@@ -412,7 +412,7 @@ fn generate_code() -> GeneratedCode {
                 )
                 .field_int(
                     "extended_size_info_index",
-                    find_index(&imm.encoded_size, &uniq_op_size_infos),
+                    find_index(&imm.extended_size, &uniq_op_size_infos),
                 )
                 .field(
                     "extend_kind",
