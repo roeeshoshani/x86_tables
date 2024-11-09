@@ -1,7 +1,7 @@
 use crate::{table_gen_utils::*, table_types::*};
 
 const SIMPLE_BINOP_MNEMONICS: [Mnemonic; 8] =
-    ["add", "or", "adc", "sbb", "and", "sub", "xor", "cmd"];
+    ["add", "or", "adc", "sbb", "and", "sub", "xor", "cmp"];
 
 const SHIFT_BINOP_MNEMONICS: [Mnemonic; 8] = [
     "rol",
