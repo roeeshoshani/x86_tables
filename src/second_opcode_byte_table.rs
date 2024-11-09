@@ -137,9 +137,27 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
             OpInfo::Rm(OpSizeInfo::SZ_ALWAYS_16),
         ],
     }));
-    // 0xb8 - 0xff
+    // 0xb8 - 0xbd
     assert_eq!(table.len(), 0xb8);
-    unsupported(&mut table, 0x48);
+    unsupported(&mut table, 6);
+    // 0xbe
+    assert_eq!(table.len(), 0xbe);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movsx",
+        ops: &[OpInfo::R_MODRM_16_32_64_DEF_32, OpInfo::RM_8],
+    }));
+    // 0xbf
+    assert_eq!(table.len(), 0xbf);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movsx",
+        ops: &[
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::Rm(OpSizeInfo::SZ_ALWAYS_16),
+        ],
+    }));
+    // 0xc0 - 0xff
+    assert_eq!(table.len(), 0xc0);
+    unsupported(&mut table, 0x40);
 
     assert_eq!(table.len(), 0x100);
 
