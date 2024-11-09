@@ -323,7 +323,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
     // 0x98
     assert_eq!(table.len(), 0x98);
     table.push(InsnInfo::Regular(RegularInsnInfo {
-        mnemonic: "movsz", // this is actually cbw, but this makes life simpler when lifting it
+        mnemonic: "movsx", // this is actually cbw, but this makes life simpler when lifting it
         ops: &[
             OpInfo::AX_16_32_64_DEF_32,
             OpInfo::SpecificReg(SpecificRegOpInfo {
