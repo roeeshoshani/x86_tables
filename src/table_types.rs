@@ -28,6 +28,14 @@ impl OpSizeInfo {
         mode_64_with_rex_w: OpSize::S8,
     };
 
+    /// operand size is always 16 bits
+    pub const SZ_ALWAYS_16: Self = Self {
+        with_operand_size_override: OpSize::S16,
+        mode_32: OpSize::S16,
+        mode_64: OpSize::S16,
+        mode_64_with_rex_w: OpSize::S16,
+    };
+
     /// the default operand size for instructions that default to 32-bit operands.
     pub const SZ_16_32_64_DEF_32: Self = Self {
         with_operand_size_override: OpSize::S16,

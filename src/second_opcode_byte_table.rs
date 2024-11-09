@@ -119,9 +119,27 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
             }),
         ],
     }));
-    // 0xa6 - 0xff
+    // 0xa6 - 0xb5
     assert_eq!(table.len(), 0xa6);
-    unsupported(&mut table, 90);
+    unsupported(&mut table, 0x10);
+    // 0xb6
+    assert_eq!(table.len(), 0xb6);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movzx",
+        ops: &[OpInfo::R_MODRM_16_32_64_DEF_32, OpInfo::RM_8],
+    }));
+    // 0xb7
+    assert_eq!(table.len(), 0xb7);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "movzx",
+        ops: &[
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::Rm(OpSizeInfo::SZ_ALWAYS_16),
+        ],
+    }));
+    // 0xb8 - 0xff
+    assert_eq!(table.len(), 0xb8);
+    unsupported(&mut table, 0x48);
 
     table
 }
