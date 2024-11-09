@@ -141,5 +141,7 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
     assert_eq!(table.len(), 0xb8);
     unsupported(&mut table, 0x48);
 
+    assert_eq!(table.len(), 0x100);
+
     table
 }

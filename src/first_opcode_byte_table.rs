@@ -822,5 +822,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
         ],
     }));
 
+    assert_eq!(table.len(), 0x100);
+
     table
 }
