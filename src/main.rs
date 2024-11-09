@@ -101,7 +101,7 @@ fn vec_dedup<T: Eq>(vec: &mut Vec<T>) {
         while j < vec.len() {
             if vec[i] == vec[j] {
                 // found duplicate, remove it
-                vec.swap_remove(j);
+                vec.remove(j);
             } else {
                 j += 1;
             }
