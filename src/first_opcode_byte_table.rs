@@ -570,12 +570,12 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
     // 0xe8
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "call",
-        ops: &[OpInfo::REL_16_32],
+        ops: &[OpInfo::REL_32],
     }));
     // 0xe9
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "jmp",
-        ops: &[OpInfo::REL_16_32],
+        ops: &[OpInfo::REL_32],
     }));
     // 0xea
     unsupported(&mut table, 1);

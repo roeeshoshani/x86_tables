@@ -69,7 +69,7 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
         16,
         InsnInfo::Regular(RegularInsnInfo {
             mnemonic: "jcc",
-            ops: &[OpInfo::Cond, OpInfo::REL_16_32],
+            ops: &[OpInfo::Cond, OpInfo::REL_32],
         }),
     );
     // 0x90 - 0x9f

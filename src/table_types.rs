@@ -200,13 +200,13 @@ impl OpInfo {
         extend_kind: ImmExtendKind::SignExtend,
     });
 
-    /// a 16/32 bit relative offset
-    pub const REL_16_32: Self = Self::Rel(OpSizeInfo {
-        // operand size override is not allowed with relative operands, so this is ignores anyway
+    /// a 32 bit relative offset
+    pub const REL_32: Self = Self::Rel(OpSizeInfo {
+        // operand size override is not allowed with relative operands, so this is ignored anyway
         with_operand_size_override: OpSize::S16,
         mode_32: OpSize::S32,
-        mode_64: OpSize::S64,
-        mode_64_with_rex_w: OpSize::S64,
+        mode_64: OpSize::S32,
+        mode_64_with_rex_w: OpSize::S32,
     });
 }
 
