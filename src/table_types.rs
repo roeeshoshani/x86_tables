@@ -210,7 +210,7 @@ impl OpInfo {
 
     /// a 32 bit relative offset
     pub const REL_32: Self = Self::Rel(OpSizeInfo {
-        // operand size override is not allowed with relative operands, so this is ignored anyway
+        // operand size override is not supported with relative operands, so this is ignored anyway
         with_operand_size_override: OpSize::S16,
         mode_32: OpSize::S32,
         mode_64: OpSize::S32,

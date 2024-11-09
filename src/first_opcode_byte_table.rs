@@ -830,11 +830,38 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
                 mnemonic: "dec",
                 ops: &[OpInfo::RM_16_32_64_DEF_32],
             },
+            // 2
+            RegularInsnInfo {
+                mnemonic: "call",
+                ops: &[OpInfo::Rm(OpSizeInfo {
+                    // operand size override is not supported with branch instruction, so this is ignored anyway
+                    with_operand_size_override: OpSize::S16,
+                    mode_32: OpSize::S32,
+                    mode_64: OpSize::S64,
+                    mode_64_with_rex_w: OpSize::S64,
+                })],
+            },
+            // 3
             RegularInsnInfo::UNSUPPORTED,
+            // 4
+            RegularInsnInfo {
+                mnemonic: "jmp",
+                ops: &[OpInfo::Rm(OpSizeInfo {
+                    // operand size override is not supported with branch instruction, so this is ignored anyway
+                    with_operand_size_override: OpSize::S16,
+                    mode_32: OpSize::S32,
+                    mode_64: OpSize::S64,
+                    mode_64_with_rex_w: OpSize::S64,
+                })],
+            },
+            // 5
             RegularInsnInfo::UNSUPPORTED,
-            RegularInsnInfo::UNSUPPORTED,
-            RegularInsnInfo::UNSUPPORTED,
-            RegularInsnInfo::UNSUPPORTED,
+            // 6
+            RegularInsnInfo {
+                mnemonic: "jmp",
+                ops: &[OpInfo::RM_16_32_64_DEF_64],
+            },
+            // 7
             RegularInsnInfo::UNSUPPORTED,
         ],
     }));
