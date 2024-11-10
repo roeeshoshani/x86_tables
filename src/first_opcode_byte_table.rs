@@ -113,7 +113,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
     table.push(InsnInfo::Regular(RegularInsnInfo {
         mnemonic: "movsxd",
         ops: &[
-            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::R_MODRM_16_32_64_DEF_32,
             OpInfo::Rm(OpSizeInfo {
                 with_operand_size_override: OpSize::S16,
                 mode_32: OpSize::S32,
