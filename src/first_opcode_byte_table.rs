@@ -858,7 +858,7 @@ pub fn gen_first_opcode_byte_table() -> Vec<InsnInfo> {
             RegularInsnInfo::UNSUPPORTED,
             // 6
             RegularInsnInfo {
-                mnemonic: "jmp",
+                mnemonic: "push",
                 ops: &[OpInfo::RM_16_32_64_DEF_64],
             },
             // 7
