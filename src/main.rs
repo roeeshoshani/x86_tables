@@ -61,7 +61,7 @@ fn op_kind_to_c_variant_name(op_kind_variant_name: &str) -> String {
 
 fn imm_ext_kind_to_c_variant_name(imm_ext_kind_variant_name: &str) -> String {
     format!(
-        "IMM_EXT_{}",
+        "IMM_EXT_KIND_{}",
         imm_ext_kind_variant_name.to_snake_case().to_uppercase()
     )
 }
@@ -292,14 +292,6 @@ fn generate_code() -> GeneratedCode {
         OpInfo::VARIANT_NAMES
             .into_iter()
             .map(|x| op_kind_to_c_variant_name(x)),
-    );
-
-    types_file.emit_enum(
-        "imm_ext_kind_t",
-        "IMM_EXT_",
-        ImmExtendKind::VARIANT_NAMES
-            .into_iter()
-            .map(|x| imm_ext_kind_to_c_variant_name(x)),
     );
 
     types_file.emit_enum(
