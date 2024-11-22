@@ -119,9 +119,40 @@ pub fn gen_second_opcode_byte_table() -> Vec<InsnInfo> {
             }),
         ],
     }));
-    // 0xa6 - 0xae
+    // 0xa6 - 0xab
     assert_eq!(table.len(), 0xa6);
-    unsupported(&mut table, 9);
+    unsupported(&mut table, 6);
+    // 0xac
+    assert_eq!(table.len(), 0xac);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "shrd",
+        ops: &[
+            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::Imm(ImmOpInfo {
+                encoded_size: OpSizeInfo::SZ_ALWAYS_8,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+                extend_kind: ImmExtendKind::ZeroExtend,
+            }),
+        ],
+    }));
+    // 0xad
+    assert_eq!(table.len(), 0xad);
+    table.push(InsnInfo::Regular(RegularInsnInfo {
+        mnemonic: "shrd",
+        ops: &[
+            OpInfo::RM_16_32_64_DEF_32,
+            OpInfo::R_MODRM_16_32_64_DEF_32,
+            OpInfo::ZextSpecificReg(ZextSpecificRegOpInfo {
+                reg: SpecificReg::Rcx,
+                size: OpSizeInfo::SZ_ALWAYS_8,
+                extended_size: OpSizeInfo::SZ_16_32_64_DEF_32,
+            }),
+        ],
+    }));
+    // 0xae
+    assert_eq!(table.len(), 0xae);
+    unsupported(&mut table, 1);
     // 0xaf
     assert_eq!(table.len(), 0xaf);
     table.push(InsnInfo::Regular(RegularInsnInfo {
